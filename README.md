@@ -1,1 +1,1 @@
-# minfi_galaxy-
+# minfi_galaxy scripts and dependencies
