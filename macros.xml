@@ -1,5 +1,5 @@
 <macros>
-<token name="@VERSION@">1.26.2</token>
+<token name="@VERSION@">1.28.0</token>
     <xml name="requirements">
         <requirements>
             <requirement type="package" version="3.5.1">r-base</requirement>
@@ -9,7 +9,7 @@
             <yield />
         </requirements>
     </xml>
-    <token name="@MINFI_VERSION@">1.26.2</token>
+    <token name="@MINFI_VERSION@">1.28.0</token>
     <xml name="citations">
         <citations>
             <citation type="doi">10.1093/bioinformatics/btu049</citation>
