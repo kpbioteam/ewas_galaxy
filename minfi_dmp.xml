@@ -56,7 +56,7 @@ write.table(data, file= '$dmp', quote = FALSE,col.names = FALSE, row.names = FAL
             <option value="categorical">categorical</option>
             <option value="continuous">continuous</option>
         </param> 
-        <param name="q_cutoff" type="integer" value="1" label="qCutoff Size" help="DMPs with an FDR q-value greater than this will not be returned."/>
+        <param name="q_cutoff" type="float" value="1" label="qCutoff Size" help="DMPs with an FDR q-value greater than this will not be returned."/>
         <param name="variance_shrinkage" type="boolean" truevalue="TRUE" falsevalue="FALSE" label="Variance Shrinkage"
             help="Enable variance shrinkage is recommended when sample sizes are small"/>
         <param type="data" name="ucsc_genome" format="gtf" label="Genome Table" help="UCSC genome data Methyl450"/>
