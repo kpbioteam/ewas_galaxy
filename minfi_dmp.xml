@@ -39,7 +39,7 @@ dmp[,"names"] <- rownames(dmp)
 
 data <- merge(dmp, tab, by="names",sort = TRUE)
 
-data <- data[,c(6,7,8,1,4)]  
+data <- data[,c(6,7,8,1,4,5)]  
 
 write.table(data, file= '$dmp', quote = FALSE,col.names = TRUE, row.names = FALSE, sep = "\t")
 ]]>
@@ -81,6 +81,7 @@ The output is an interval file with the following columns:
     - end
     - names
     - pvalue
+    - qval 
 
  ]]></help>
     <expand macro="citations" />
