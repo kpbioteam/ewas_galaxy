@@ -46,7 +46,7 @@ write.table(data, file= '$dmp', quote = FALSE,col.names = TRUE, row.names = FALS
         </configfile>
     </configfiles> 
     <inputs>
-        <param type="data" name="grset" format="rdata" label="Input Set" help="MethylSet, RatioSet or GenomicRatioSet" />
+        <param type="data" name="grset" format="rdata" label="Data Mapped To The Genome" help="MethylSet, RatioSet or GenomicRatioSet" />
         <param type="data" name="phenotype_table" format="tabular" label="Phenotype Table"/>
         <param name="phenotype" type="select" label="Phenotype Type">
             <option value="categorical">categorical</option>
