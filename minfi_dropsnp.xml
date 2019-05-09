@@ -1,4 +1,4 @@
-<tool id="minfi_dropsnp" name="Minfi drop SNPs" version="@MINFI_VERSION@">
+<tool id="minfi_dropsnp" name="Minfi Drop SNPs" version="@MINFI_VERSION@">
     <description>drop the probes that contain either a SNP at the CpG interrogation or at the single nucleotide extension</description>
        <macros>
         <import>macros.xml</import>
