@@ -28,7 +28,7 @@ save(GRSet,file =  '$grsetwithoutsnp')
 location."/>
     </inputs>
     <outputs>
-        <data name="grsetwithoutsnp" format="rdata" from_work_dir="dropsnpGRSet.rdata" label="GRSet without SNPs"/>
+        <data name="grsetwithoutsnp" format="rdata" from_work_dir="dropsnpGRSet.rdata" label="Data Mapped To The Genome without SNPs"/>
     </outputs>
     <tests>
         <test>
