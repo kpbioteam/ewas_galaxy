@@ -24,7 +24,7 @@ write.table(snps, '$table')
     </configfile>
     </configfiles> 
 <inputs>
-        <param type="data" name="grset" format="rdata" label="GenomicRatioSet" help="This class holds preprocessed data for Illumina methylation microarrays, mapped to a genomic
+        <param type="data" name="grset" format="rdata" label="Data Mapped To The Genome" help="This class (GenomicRatioSet) holds preprocessed data for Illumina methylation microarrays, mapped to a genomic
 location."/>
     </inputs>
     <outputs>
