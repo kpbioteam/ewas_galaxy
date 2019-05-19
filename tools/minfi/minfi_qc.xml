@@ -10,7 +10,7 @@
      ]]>
     </command>
     <configfiles>
-      <configfile name="read_qc_script">
+        <configfile name="read_qc_script">
     <![CDATA[
 require("minfi", quietly = TRUE)
 
@@ -24,11 +24,11 @@ png('$qcpng')
 plotQC(qc)
 dev.off()
     ]]>
-     </configfile>
-        </configfiles>
+        </configfile>
+    </configfiles>
     <inputs>
-        <param type="data" name="MethylSet" format="rdata" label="MethylSet" help="This class holds preprocessed data for Illumina methylation microarrays, mapped to a genomic
-location."/>
+        <param type="data" name="MethylSet" format="rdata" label="MethylSet"
+            help="This class holds preprocessed data for Illumina methylation microarrays, mapped to a genomic location."/>
     </inputs>
     <outputs>
         <data name="qctab" format="txt" label="Quality Control Report"/>

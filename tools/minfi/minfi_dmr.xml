@@ -56,8 +56,8 @@ write.table(dmrGR, file= '$dmr', quote = FALSE,col.names = TRUE, row.names = FAL
     </configfile>
     </configfiles>
     <inputs>
-        <param type="data" name="grset" format="rdata" label="Data Mapped To The Genome" help="This class (GenomicRatioSet) holds preprocessed data for Illumina methylation microarrays, mapped to a genomic
-location." />
+        <param type="data" name="grset" format="rdata" label="Data Mapped To The Genome"
+            help="This class (GenomicRatioSet) holds preprocessed data for Illumina methylation microarrays, mapped to a genomic location." />
         <param type="data" name="phenotype_table" format="tabular" label="Phenotype Table"
             help="Phenotype Table must include the following information: sampleID, phenotype and paird or unpaired samples column"/>
         <param name="maxgap_size" type="integer" value="250" label="maxGap Size"

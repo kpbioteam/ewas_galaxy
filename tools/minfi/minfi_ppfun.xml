@@ -11,7 +11,7 @@
     ]]>
     </command>
     <configfiles>
-    <configfile name="minfi_pp_script"><![CDATA[
+        <configfile name="minfi_pp_script"><![CDATA[
 require("minfi", quietly = TRUE)
 RGSet <- get(load('$rgset'))
 
@@ -19,11 +19,11 @@ GRSet <- preprocessFunnorm(RGSet)
 
 save(GRSet,file = '$grset')
  ]]> 
-    </configfile>
-    </configfiles> 
-
-<inputs>
-        <param type="data" name="rgset" format="rdata" label="RGChannelSet" help="These classes represents raw (unprocessed) data from a two color micro array; specifically an Illumina methylation array." />
+        </configfile>
+    </configfiles>
+    <inputs>
+        <param type="data" name="rgset" format="rdata" label="RGChannelSet"
+            help="These classes represents raw (unprocessed) data from a two color micro array; specifically an Illumina methylation array." />
     </inputs>
     <outputs>
         <data name="grset" format="rdata" label="GenomicRatioSet"/>

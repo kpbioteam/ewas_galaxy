@@ -21,13 +21,14 @@ save(MSet,file = '$MethylSet')
 
      ]]> 
     </configfile>
-    </configfiles>  
- <inputs>
-        <param type="data" name="RGChannelSet" format="rdata" label="RGChannelSet" help="These classes represents raw (unprocessed) data from a two color micro array; specifically an Illumina methylation array."/>
- </inputs>
- <outputs>
+    </configfiles>
+    <inputs>
+        <param type="data" name="RGChannelSet" format="rdata" label="RGChannelSet"
+            help="These classes represents raw (unprocessed) data from a two color micro array; specifically an Illumina methylation array."/>
+    </inputs>
+    <outputs>
         <data name="MethylSet" format="rdata" label="MethylSet" />
- </outputs>
+    </outputs>
     <tests>
         <test>
             <param name="RGChannelSet" value="RGChannelSet.rdata"/>

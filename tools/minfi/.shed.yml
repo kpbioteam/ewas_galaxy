@@ -11,3 +11,5 @@ long_description: EWAS Tools Suite includes raw intensity data loading .idat pre
 name: ewas_suite
 owner: kpbioteam
 remote_repository_url: https://github.com/kpbioteam/ewas_galaxy
+exclude:
+  - test-data/*

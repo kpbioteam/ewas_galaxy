@@ -9,9 +9,9 @@
         Rscript '$read_rset_script'
      ]]>
    </command>
- <configfiles>
-      <configfile name="read_rset_script">
-   <![CDATA[
+    <configfiles>
+        <configfile name="read_rset_script">
+<![CDATA[
 require("minfi", quietly = TRUE)
 MSet <- get(load('$mset'))
 
@@ -19,10 +19,10 @@ RSet <- ratioConvert(MSet, what = "both", keepCN = TRUE)
 
 save(RSet,file = '$rset')  
     ]]> </configfile>
-        </configfiles>
-  <inputs>
-        <param type="data" name="mset" format="rdata" label="MethylSet" help="This class holds preprocessed data for Illumina methylation microarrays, mapped to a genomic
-location."/>
+    </configfiles>
+    <inputs>
+        <param type="data" name="mset" format="rdata" label="MethylSet"
+            help="This class holds preprocessed data for Illumina methylation microarrays, mapped to a genomic location."/>
     </inputs>
     <outputs>
         <data name="rset" format="rdata" label="RatioSet"/>

@@ -12,7 +12,7 @@
     ]]>
     </command>
     <configfiles>
-    <configfile name="minfi_mtg_script"><![CDATA[ 
+        <configfile name="minfi_mtg_script"><![CDATA[ 
 require("minfi", quietly = TRUE)
 require("IlluminaHumanMethylation450kanno.ilmn12.hg19", quietly = TRUE)
 
@@ -22,7 +22,7 @@ GRSet <- mapToGenome(RSet)
 
 save(GRSet,file = '$grset')
     ]]>
-    </configfile>
+        </configfile>
     </configfiles>
     <inputs>
         <param type="data" name="rset" format="rdata" label="Methylation Data to Map" help="This class holds preprocessed data for Illumina methylation microarrays." />
