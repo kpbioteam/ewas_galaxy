@@ -20,7 +20,6 @@
         files['${counter+1}'] <- '${file}'
         #end for
         out <- read.metharray(files)
-        colnames(out) <- c($names)
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
         </configfiles>
