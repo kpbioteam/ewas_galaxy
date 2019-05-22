@@ -5,13 +5,10 @@
     </requirements>
     <command detect_errors="exit_code"><![CDATA[
       #for $counter, $file in enumerate($files_red):
-        ln -s $file ./${counter+1}_Red.idat &&
+        ln -s $file ./${file}_Red.idat &&
       #end for
       #for $counter, $file in enumerate($files_grn):
-            ln -s $file ./${counter+1}_Grn.idat &&
-      #end for
-      #for $names, $files_red:
-        export names=$(find . $files_red '*._Red.idat' | tr '\n' ',')
+            ln -s $file ./${file}_Grn.idat &&
       #end for
       Rscript '$read_idat_script'
       ]]></command>
@@ -20,7 +17,7 @@
         require("minfi", quietly = TRUE)
         files<-list()
         #for $counter, $input in enumerate($files_red):
-        files['${counter+1}'] <- '${counter+1}'
+        files['${counter+1}'] <- '${file}'
         #end for
         out <- read.metharray(files)
         colnames(out) <- c($names)
