@@ -20,6 +20,7 @@
         files['${counter+1}'] <- '${counter+1}'
         #end for
         out <- read.metharray(files)
+<!-- @kpbioteam input code here ->
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
         </configfiles>
