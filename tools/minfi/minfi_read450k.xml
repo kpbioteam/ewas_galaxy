@@ -10,6 +10,9 @@
       #for $counter, $file in enumerate($files_grn):
             ln -s $file ./${counter+1}_Grn.idat &&
       #end for
+      #for $names, $files_red:
+        export names=$(find . $files_red '*._Red.idat' | tr '\n' ',')
+      #end for
       Rscript '$read_idat_script'
       ]]></command>
       <configfiles>
@@ -20,7 +23,7 @@
         files['${counter+1}'] <- '${counter+1}'
         #end for
         out <- read.metharray(files)
-<!-- @kpbioteam input code here ->
+        colnames(out) <- c($names)
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
         </configfiles>
