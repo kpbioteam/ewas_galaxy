@@ -8,7 +8,6 @@
 #if $input.format=="files":
     ## Adapted from DESeq2 wrapper
     #set $temp_factor_names = list()
-#end if
     #for $fact in $input.rep_factor:
         #set $temp_factor = list()
         #for $g in $fact.rep_group:
@@ -16,10 +15,21 @@
             #for $file in $g.countsFile:
                 $count_files.append(str($file))
             #end for
-            #for $temp_factor.append( {str($g.groupName): $count_files} )
+            $temp_factor.append( {str($g.groupName): $count_files} )
         #end for
+        $temp_factor.reverse()
+        $temp_factor_names.append([str($fact.factorName), $temp_factor])
+    #end for
+    -j '#echo json.dumps(temp_factor_names)#'
+#elif $input.format=="matrix":
+    -m '$input.counts'
+    #if $input.fact.ffile=='yes':
+        -f '$input.fact.finfo'
+    #else:
+        -i '${ '|'.join( ['%s::%s' % ($x.factorName, $x.groupNames) for x in $input.fact.rep_factor] ) }'
+    #end if
+#end if
       Rscript '$read_idat_script'
-        #end for
       ]]></command>
       <configfiles>
       <configfile name="read_idat_script"><![CDATA[
@@ -46,6 +56,7 @@
                         <valid initial="string.letters,string.digits"><add value="_" /></valid>
                     </sanitizer>
                     </param> -->
+              <when value="files">
                     <repeat name="rep_group" title="Group" min="2" default="2">
                         <param name="groupName" type="text" label="Name"
                         help="Name of group that the counts files belong Grn or Red.">
@@ -55,6 +66,7 @@
                         </param>
                         <param name="countsFile" type="data" format="tabular" multiple="true" label="Counts files"/>
                     </repeat>
+              </when>
             
            <!-- <param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
           <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" /> -->
