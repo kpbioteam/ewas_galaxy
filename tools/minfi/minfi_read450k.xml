@@ -16,7 +16,7 @@
       <configfile name="read_idat_script"><![CDATA[
         require("minfi", quietly = TRUE)
         files<-list()
-        #for $counter, $input in enumerate($files_red):
+        #for $counter, $file in enumerate($files_red):
         files['${counter+1}'] <- '${file}'
         #end for
         out <- read.metharray(files)
