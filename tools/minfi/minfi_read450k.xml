@@ -71,9 +71,8 @@
            <!-- <param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
           <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" /> -->
               <!--    </when> -->
-               <when value="matrix">
+               <when value="matrix"/>
                 <param name="counts" type="data" format="tabular" label="Count Matrix"/>
-               </when>
             </inputs>
             <outputs>
             <data name="RGChannelSet" format="rdata" label="RGChannelSet"/>
