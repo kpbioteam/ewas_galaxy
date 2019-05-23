@@ -15,7 +15,7 @@
             #for $file in $g.countsFile:
                 $count_files.append(str($file))
             #end for
-            $temp_factor.append( {str($g.groupName): $count_files} )
+            #for $temp_factor.append( {str($g.groupName): $count_files} )
         #end for
       Rscript '$read_idat_script'
       ]]></command>
