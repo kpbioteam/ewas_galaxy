@@ -64,7 +64,7 @@
                             <valid initial="string.letters,string.digits"><add value="_" /></valid>
                         </sanitizer>
                         </param>
-                        <param name="countsFile" type="data" format="tabular" multiple="true" label="Counts files"/
+                        <param name="countsFile" type="data" format="tabular" multiple="true" label="Counts files"/>
                     </repeat>
               
             
