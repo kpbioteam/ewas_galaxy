@@ -38,11 +38,10 @@
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
         </configfiles>
-        <inputs>
             
 <!-- write our inputs into DESEQ Limma Style -->
             
-        <conditional name="input">
+          <inputs>
             <param name="format" type="select" label=".IDAT Files or Matrix?"
                 help="You can choose to input either separate .IDAT files (one per sample) or a sample matrix">
                 <option value="files">Separate .IDAT Files</option>
@@ -65,7 +64,6 @@
                         </param>
                         <param name="countsFile" type="data" format="tabular" multiple="true" label="Counts files"/>
                     </repeat>
-            </when>
             
            <!-- <param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
           <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" /> -->
