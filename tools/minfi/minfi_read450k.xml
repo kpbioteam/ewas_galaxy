@@ -85,7 +85,7 @@
                 </repeat>
                 <repeat name="rep_group">
                     <param name="groupName" value="Grn"/>
-                    <param name="countsFile" value="GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,SM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat" ftype="idat"/>
+                    <param name="countsFile" value="GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat" ftype="idat"/>
                 </repeat>
              <output name="RGChannelSet" file="RGChannelSet.rdata"/>
         </test>
