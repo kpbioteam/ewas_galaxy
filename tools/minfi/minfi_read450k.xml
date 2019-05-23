@@ -56,11 +56,10 @@
                         <valid initial="string.letters,string.digits"><add value="_" /></valid>
                     </sanitizer>
                     </param> -->
-              <when value="files">
+              <when value="files"/>
                     <repeat name="rep_group" title="Group" min="2" default="2">
                         <param name="groupName" type="text" label="Name"
                         help="Name of group that the counts files belong Grn or Red.">
-              </when>
                         <sanitizer>
                             <valid initial="string.letters,string.digits"><add value="_" /></valid>
                         </sanitizer>
