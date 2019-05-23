@@ -17,17 +17,6 @@
             #end for
             $temp_factor.append( {str($g.groupName): $count_files} )
         #end for
-        $temp_factor.reverse()
-        $temp_factor_names.append([str($fact.factorName), $temp_factor])
-    #end for
-    -j '#echo json.dumps(temp_factor_names)#'
-#elif $input.format=="matrix":
-    -m '$input.counts'
-    #if $input.fact.ffile=='yes':
-        -f '$input.fact.finfo'
-    #else:
-        -i '${ '|'.join( ['%s::%s' % ($x.factorName, $x.groupNames) for x in $input.fact.rep_factor] ) }'
-    #end for
       Rscript '$read_idat_script'
       ]]></command>
       <configfiles>
