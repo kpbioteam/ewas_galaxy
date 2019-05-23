@@ -21,6 +21,7 @@
         $temp_factor_names.append([str($fact.factorName), $temp_factor])
     #end for
     -j '#echo json.dumps(temp_factor_names)#'
+
 #elif $input.format=="matrix":
     -m '$input.counts'
     #if $input.fact.ffile=='yes':
