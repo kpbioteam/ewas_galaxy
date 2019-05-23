@@ -65,8 +65,9 @@
                         </sanitizer>
                         </param>
                         <param name="countsFile" type="data" format="tabular" multiple="true" label="Counts files"/>
+                        </when>
                     </repeat>
-              </when>
+              
             
            <!-- <param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
           <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" /> -->
