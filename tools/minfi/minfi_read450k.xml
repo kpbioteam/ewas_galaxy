@@ -48,7 +48,7 @@
                 <option value="matrix">Sample Matrix</option>
             </param>
             
-         <when value="files">
+          <!--  <when value="files"> -->
                  <!-- <repeat name="rep_factor" title="Factor" min="1">
                    <param name="factorName" type="text" label="Name" help="Name of experiment factor of interest (e.g. Genotype). One factor must be entered and there must be two or more groups per factor. Optional additional factors (e.g. Batch) can be entered using the Insert Factor button below, see Help section for more information. NOTE: Please only use letters, numbers or underscores.">
                     <sanitizer>
@@ -67,7 +67,7 @@
             
            <!-- <param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
           <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" /> -->
-               </when>
+              <!--    </when> -->
             </inputs>
             <outputs>
             <data name="RGChannelSet" format="rdata" label="RGChannelSet"/>
