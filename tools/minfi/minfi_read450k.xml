@@ -83,7 +83,7 @@
     
     <!-- write our inputs into DESEQ Limma Style -->
      <tests>             
-        <test>
+       <test expect_num_outputs="1">
             <param name="format" value="files" />
             <repeat name="rep_factor">
                 <param name="factorName" value="Genotype"/> 
