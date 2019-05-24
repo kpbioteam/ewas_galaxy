@@ -40,9 +40,18 @@ Rscript '$read_idat_script'
       ]]></command>
       <configfiles>
       <configfile name="read_idat_script"><![CDATA[
-        require("minfi", quietly = TRUE)
-        out <- read.metharray($input)
-        save(out, file = '$RGChannelSet')
+
+    require("minfi", quietly = TRUE)
+    library("rjson")
+
+    parser <- newJSONParser()
+    parser$addData(filesPath)
+    factorList <- parser$getObject()
+    factors <- sapply(factorList, function(x) x[[1]])
+    filenamesIn <- unname(unlist(factorList[[1]][[2]]))
+    out <- read.metharray(filenamesIn)
+    save(out, file = '$RGChannelSet')
+
         ]]> </configfile>
         </configfiles>
             
