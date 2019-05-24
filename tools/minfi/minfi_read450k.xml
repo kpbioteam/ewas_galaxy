@@ -51,14 +51,15 @@
                 <option value="matrix">Sample Matrix</option>
             </param>
             
-          <!--  <when value="files"> -->
-                 <!-- <repeat name="rep_factor" title="Factor" min="1">
+            <when value="files"> 
+                  <repeat name="rep_factor" title="Factor" min="1">
                    <param name="factorName" type="text" label="Name" help="Name of experiment factor of interest (e.g. Genotype). One factor must be entered and there must be two or more groups per factor. Optional additional factors (e.g. Batch) can be entered using the Insert Factor button below, see Help section for more information. NOTE: Please only use letters, numbers or underscores.">
                     <sanitizer>
                         <valid initial="string.letters,string.digits"><add value="_" /></valid>
                     </sanitizer>
-                    </param> -->
-              <when value="files">
+                    </param> 
+                      
+            <!--  <when value="files"> -->
                     <repeat name="rep_group" title="Group" min="2" default="2">
                         <param name="groupName" type="text" label="Name"
                         help="Name of group that the counts files belong Grn or Red.">
@@ -66,7 +67,7 @@
                             <valid initial="string.letters,string.digits"><add value="_" /></valid>
                         </sanitizer>
                         </param>
-                        <param name="countsFile" type="data" format="tabular" multiple="true" label="Counts files"/>
+                        <param name="countsFile" type="data" format="tabular" multiple="true" label="Separate .IDAT Files"/>
                     </repeat>
                 </when>
               
@@ -75,7 +76,7 @@
           <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" /> -->
               <!--    </when> -->
                <when value="matrix">
-                <param name="counts" type="data" format="tabular" label="Count Matrix"/>
+                <param name="counts" type="data" format="tabular" label="Sample Matrix"/>
                </when>
               </conditional>
             </inputs>
@@ -88,8 +89,8 @@
              <tests>
         <test>
             <param name="format" value="files" />
-          <!--  <repeat name="rep_factor">
-                <param name="factorName" value="Genotype"/> -->
+            <repeat name="rep_factor">
+                <param name="factorName" value="Genotype"/> 
                 <repeat name="rep_group">
                     <param name="groupName" value="Red"/>
                     <param name="countsFile" value="GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat" ftype="idat"/>
