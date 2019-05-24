@@ -10,7 +10,6 @@
       #for $counter, $file in enumerate($files_grn):
             ln -s $file ./${counter+1}_Grn.idat &&
       #end for
-        print $file
       Rscript '$read_idat_script'
       ]]></command>
       <configfiles>
@@ -22,20 +21,21 @@
         #end for
         out <- read.metharray(files)
         save(out, file = '$RGChannelSet')
+        print $file
         ]]> </configfile>
         </configfiles>
         <inputs>
-        <param type="data" name="idatFile" multiple="true" format="idat" label="Red .IDAT files"/>
-         <!-- <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" />
-               --> </inputs>
+        <param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
+          <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" />
+            </inputs>
             <outputs>
             <data name="RGChannelSet" format="rdata" label="RGChannelSet"/>
               </outputs>
              <tests>
         <test>
-            <param name="idatFile" value="GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat" ftype="idat"/>
-           <!-- <param name="files_grn" value="GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,SM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat" ftype="idat"/>
-           --> <output name="RGChannelSet" file="RGChannelSet.rdata"/>
+            <param name="files_red" value="GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat" ftype="idat"/>
+            <param name="files_grn" value="GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,SM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat" ftype="idat"/>
+            <output name="RGChannelSet" file="RGChannelSet.rdata"/>
         </test>
     </tests>
     <help><![CDATA[
