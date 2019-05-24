@@ -21,7 +21,6 @@
         #end for
         out <- read.metharray(files)
         save(out, file = '$RGChannelSet')
-        print $file
         ]]> </configfile>
         </configfiles>
         <inputs>
