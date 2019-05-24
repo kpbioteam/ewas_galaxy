@@ -2,139 +2,61 @@
     <description>load .IDAT files</description>
     <requirements>
         <requirement type="package" version="1.24.0">bioconductor-minfi</requirement>
-         <requirement type="package" version="0.2.20">r-rjson</requirement>
     </requirements>
-<command detect_errors="exit_code"><![CDATA[
+    <command detect_errors="exit_code"><![CDATA[
 
-#import json
-#import os
+    #import os
 
-Rscript '$read_idat_script'
-
-#if $input.format=="files":
-
-    ## Adapted from DESeq2 wrapper
+    #set $filename_to_element_identifiers = {}
     #set $temp_factor_names = list()
-    #for $fact in $input.rep_factor:
+    #for $factor in $select_data.rep_factorName:
         #set $temp_factor = list()
-        #for $g in $fact.rep_group:
+        #for $level in $factor.rep_factorLevel:
             #set $count_files = list()
-            #for $file in $g.countsFile:
-                $count_files.append(str($file))
-            #end for
-            $temp_factor.append( {str($g.groupName): $count_files} )
-        #end for
-        $temp_factor.reverse()
-        $temp_factor_names.append([str($fact.factorName), $temp_factor])
-    #end for
-    -j '#echo json.dumps(temp_factor_names)#'
+            #if $select_data.how == 'group_tags':
+                #for $group in $level.groups.value:
+                    #for $file in $select_data.idatFile.get_datasets_for_group($group):
+                        $count_files.append(str($file))
+                        $filename_to_element_identifiers.__setitem__(os.path.basename(str($file)),  $file.element_identifier)
+                    #end for
+                #end for
 
-#elif $input.format=="matrix":
-    -m '$input.counts'
-    #if $input.fact.ffile=='yes':
-        -f '$input.fact.finfo'
-    #else:
-        -i '${ '|'.join( ['%s::%s' % ($x.factorName, $x.groupNames) for x in $input.fact.rep_factor] ) }'
-    #end if
-#end if
+      #for $counter, $file in enumerate($files_red):
+        ln -s $file ./${counter+1}_Red.idat &&
+      #end for
+      #for $counter, $file in enumerate($files_grn):
+            ln -s $file ./${counter+1}_Grn.idat &&
+      #end for
+      Rscript '$read_idat_script'
       ]]></command>
       <configfiles>
       <configfile name="read_idat_script"><![CDATA[
-    
-    require("minfi", quietly = TRUE)
-
-# Process the separate count files (adapted from DESeq2 wrapper)
-    library("rjson")
-    parser <- newJSONParser()
-    parser$addData(opt$filesPath)
-    factorList <- parser$getObject()
-    factors <- sapply(factorList, function(x) x[[1]])
-    filenamesIn <- unname(unlist(factorList[[1]][[2]]))
-    sampleTable <- data.frame(sample=basename(filenamesIn),
-                            filename=filenamesIn,
-                            row.names=filenamesIn,
-                            stringsAsFactors=FALSE)
-    for (factor in factorList) {
-        factorName <- factor[[1]]
-        sampleTable[[factorName]] <- character(nrow(sampleTable))
-        lvls <- sapply(factor[[2]], function(x) names(x))
-        for (i in seq_along(factor[[2]])) {
-            files <- factor[[2]][[i]][[1]]
-            sampleTable[files,factorName] <- lvls[i]
-        }
-        sampleTable[[factorName]] <- factor(sampleTable[[factorName]], levels=lvls)
-    }
-    rownames(sampleTable) <- sampleTable$sample
-    rem <- c("sample","filename")
-    factors <- sampleTable[, !(names(sampleTable) %in% rem), drop=FALSE]
-
-    out <- read.metharray(basename(filenamesIn))
-
-    save(out, file = '$RGChannelSet')
-
+        require("minfi", quietly = TRUE)
+        files<-list()
+        #for $counter, $input in enumerate($files_red):
+        files['${counter+1}'] <- '${counter+1}'
+        #end for
+        out <- read.metharray(files)
+        save(out, file = '$RGChannelSet')
         ]]> </configfile>
         </configfiles>
-            
-<!-- write our inputs into DESEQ Limma Style -->
-            
-          <inputs>
-            <conditional name="input">
-            <param name="format" type="select" label=".IDAT Files or Matrix?"
-                help="You can choose to input either separate .IDAT files (one per sample) or a sample matrix">
-                <option value="files">Separate .IDAT Files</option>
-                <option value="matrix">Sample Matrix</option>
-             </param>
-             <when value="files">
-                <repeat name="rep_factor" title="Factor" min="1">
-                    <param name="factorName" type="text" label="Name" help="Name of experiment factor of interest (e.g. Genotype). One factor must be entered and there must be two or more groups per factor. Optional additional factors (e.g. Batch) can be entered using the Insert Factor button below, see Help section for more information. NOTE: Please only use letters, numbers or underscores.">
-                    <sanitizer>
-                        <valid initial="string.letters,string.digits"><add value="_" /></valid>
-                    </sanitizer>
-                    </param>
-                   <repeat name="rep_group" title="Group" min="2" default="2">
-                        <param name="groupName" type="text" label="Name"
-                        help="Name of group that the counts files belong Grn or Red.">
-                        <sanitizer>
-                            <valid initial="string.letters,string.digits"><add value="_" /></valid>
-                        </sanitizer>
-                        </param>
-                        <param name="countsFile" type="data" format="tabular" multiple="true" label="Separate .IDAT Files"/>
-                    </repeat>
-                </repeat>
-            </when>    
-          <!-- <param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
-          <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" /> -->
-              <!--    </when> -->
-               <when value="matrix">
-                <param name="counts" type="data" format="tabular" label="Sample Matrix"/>
-               </when>
-              </conditional>
-            </inputs>
-    
+        <inputs>
+        <param type="data" name="idatFile" multiple="true" format="idat" label="Red .IDAT files"/>
+         <!-- <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" />
+               --> </inputs>
             <outputs>
             <data name="RGChannelSet" format="rdata" label="RGChannelSet"/>
               </outputs>
-    
-    <!-- write our inputs into DESEQ Limma Style -->
-         <tests>
-  <test expect_num_outputs="1">
-            <param name="format" value="files" />
-            <repeat name="rep_factor"/>
-                <param name="factorName" value="Genotype"/>
-                <repeat name="rep_group">
-                    <param name="groupName" value="Red"/>
-                    <param name="countsFile" value="GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat" ftype="idat"/>
-                </repeat>
-                <repeat name="rep_group">
-                    <param name="groupName" value="Grn"/>
-                    <param name="countsFile" value="GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat" ftype="idat"/>
-                </repeat>   
-             <output name="RGChannelSet" file="RGChannelSet.rdata">
-        </output>
-  </test>
-      </tests>
+             <tests>
+        <test>
+            <param name="idatFile" value="GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat" ftype="idat"/>
+           <!-- <param name="files_grn" value="GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,SM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat" ftype="idat"/>
+           --> <output name="RGChannelSet" file="RGChannelSet.rdata"/>
+        </test>
+    </tests>
     <help><![CDATA[
 The tool load the binary 450K array “IDAT” raw files generated by the Illumina Scanner. In addition to the methylated and an unmethylated intensity values for each 450,000 CpG positions, IDAT file contains some extra info such as control probes.
+
 ]]></help>
     <citations>
         <citation type="doi">10.18129/B9.bioc.illuminaio</citation>
