@@ -18,10 +18,7 @@
         require("minfi", quietly = TRUE)
         files <- list()     
       #for $counter, $input in enumerate($files_red):
-      files['${counter+1}'] <- '${counter+1}'
-        #end for
-            #for $counter, $input in enumerate($files_grn):
-      files['${counter+1}'] <- '${counter+1}'
+      files['${counter+1}'] <- '$files_red'
         #end for
         out <- read.metharray(files)
         save(out, file = '$RGChannelSet')
