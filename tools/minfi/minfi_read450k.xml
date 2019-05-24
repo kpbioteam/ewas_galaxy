@@ -4,29 +4,13 @@
         <requirement type="package" version="1.24.0">bioconductor-minfi</requirement>
     </requirements>
     <command detect_errors="exit_code"><![CDATA[
-
-    #import os
-
-    #set $filename_to_element_identifiers = {}
-    #set $temp_factor_names = list()
-    #for $factor in $select_data.rep_factorName:
-        #set $temp_factor = list()
-        #for $level in $factor.rep_factorLevel:
-            #set $count_files = list()
-            #if $select_data.how == 'group_tags':
-                #for $group in $level.groups.value:
-                    #for $file in $select_data.idatFile.get_datasets_for_group($group):
-                        $count_files.append(str($file))
-                        $filename_to_element_identifiers.__setitem__(os.path.basename(str($file)),  $file.element_identifier)
-                    #end for
-                #end for
-
       #for $counter, $file in enumerate($files_red):
         ln -s $file ./${counter+1}_Red.idat &&
       #end for
       #for $counter, $file in enumerate($files_grn):
             ln -s $file ./${counter+1}_Grn.idat &&
       #end for
+        print $file
       Rscript '$read_idat_script'
       ]]></command>
       <configfiles>
