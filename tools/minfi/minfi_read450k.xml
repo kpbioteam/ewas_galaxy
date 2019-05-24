@@ -51,16 +51,17 @@
                 <option value="matrix">Sample Matrix</option>
             </param>
             
-            <when value="files"> 
-                  <repeat name="rep_factor" title="Factor" min="1">
-                   <param name="factorName" type="text" label="Name" help="Name of experiment factor of interest (e.g. Genotype). One factor must be entered and there must be two or more groups per factor. Optional additional factors (e.g. Batch) can be entered using the Insert Factor button below, see Help section for more information. NOTE: Please only use letters, numbers or underscores.">
+                
+
+           
+             <when value="files">
+                <repeat name="rep_factor" title="Factor" min="1">
+                    <param name="factorName" type="text" label="Name" help="Name of experiment factor of interest (e.g. Genotype). One factor must be entered and there must be two or more groups per factor. Optional additional factors (e.g. Batch) can be entered using the Insert Factor button below, see Help section for more information. NOTE: Please only use letters, numbers or underscores.">
                     <sanitizer>
                         <valid initial="string.letters,string.digits"><add value="_" /></valid>
                     </sanitizer>
-                    </param> 
-                      
-            <!--  <when value="files"> -->
-                    <repeat name="rep_group" title="Group" min="2" default="2">
+                    </param>
+                   <repeat name="rep_group" title="Group" min="2" default="2">
                         <param name="groupName" type="text" label="Name"
                         help="Name of group that the counts files belong Grn or Red.">
                         <sanitizer>
@@ -69,10 +70,12 @@
                         </param>
                         <param name="countsFile" type="data" format="tabular" multiple="true" label="Separate .IDAT Files"/>
                     </repeat>
-                </when>
-              
-            
-           <!-- <param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
+                </repeat>
+            </when>
+                
+                
+                
+          <!-- <param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
           <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" /> -->
               <!--    </when> -->
                <when value="matrix">
