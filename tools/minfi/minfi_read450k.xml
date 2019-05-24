@@ -44,6 +44,7 @@
 <!-- write our inputs into DESEQ Limma Style -->
             
           <inputs>
+            <conditional name="input">
             <param name="format" type="select" label=".IDAT Files or Matrix?"
                 help="You can choose to input either separate .IDAT files (one per sample) or a sample matrix">
                 <option value="files">Separate .IDAT Files</option>
@@ -76,8 +77,9 @@
                <when value="matrix">
                 <param name="counts" type="data" format="tabular" label="Count Matrix"/>
                </when>
-              
+              </conditional>
             </inputs>
+    
             <outputs>
             <data name="RGChannelSet" format="rdata" label="RGChannelSet"/>
               </outputs>
