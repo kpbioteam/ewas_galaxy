@@ -41,8 +41,7 @@ Rscript '$read_idat_script'
       <configfiles>
       <configfile name="read_idat_script"><![CDATA[
         require("minfi", quietly = TRUE)
-        files<-list()
-        out <- read.metharray(files)
+        out <- read.metharray($count_files)
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
         </configfiles>
