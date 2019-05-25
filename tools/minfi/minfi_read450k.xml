@@ -9,8 +9,6 @@
       #import json
 Rscript '$read_idat_script'
 
--R '$outReport'
--o '$outReport.files_path'
 #if $input.format=="files":
 
     ## Adapted from DESeq2 wrapper
@@ -50,7 +48,9 @@ trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 # switch on if 'factors' was provided:
 library("rjson")
 parser <- newJSONParser()
+
 parser$addData(opt$factors)
+
 factorList <- parser$getObject()
 filenames_to_labels <- fromJSON(opt$files_to_labels)
 factors <- sapply(factorList, function(x) x[[1]])
@@ -77,7 +77,7 @@ primaryFactor <- factors[1]
 designFormula <- as.formula(paste("~", paste(rev(factors), collapse=" + ")))
 
         
-        out <- read.metharray(filenamesIn)
+        out <- read.metharray(files)
 
         save(out, file = '$RGChannelSet')
 
