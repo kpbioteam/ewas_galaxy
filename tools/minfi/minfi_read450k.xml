@@ -41,16 +41,49 @@ Rscript '$read_idat_script'
       <configfiles>
       <configfile name="read_idat_script"><![CDATA[
         require("minfi", quietly = TRUE)
-        files <- list()     
-        #for $counter, $input in enumerate($files_red):
-        files['${counter+1}'] <- '${counter+1}'
-        #end for
-        out <- read.metharray(files)
+
+
+# build or read sample table
+
+trim <- function (x) gsub("^\\s+|\\s+$", "", x)
+
+# switch on if 'factors' was provided:
+library("rjson")
+parser <- newJSONParser()
+parser$addData(opt$factors)
+factorList <- parser$getObject()
+filenames_to_labels <- fromJSON(opt$files_to_labels)
+factors <- sapply(factorList, function(x) x[[1]])
+primaryFactor <- factors[1]
+filenamesIn <- unname(unlist(factorList[[1]][[2]]))
+labs = unname(unlist(filenames_to_labels[basename(filenamesIn)]))
+sampleTable <- data.frame(sample=basename(filenamesIn),
+                          filename=filenamesIn,
+                          row.names=filenamesIn,
+                          stringsAsFactors=FALSE)
+for (factor in factorList) {
+  factorName <- trim(factor[[1]])
+  sampleTable[[factorName]] <- character(nrow(sampleTable))
+  lvls <- sapply(factor[[2]], function(x) names(x))
+  for (i in seq_along(factor[[2]])) {
+    files <- factor[[2]][[i]][[1]]
+    sampleTable[files,factorName] <- trim(lvls[i])
+  }
+  sampleTable[[factorName]] <- factor(sampleTable[[factorName]], levels=lvls)
+}
+rownames(sampleTable) <- labs
+
+primaryFactor <- factors[1]
+designFormula <- as.formula(paste("~", paste(rev(factors), collapse=" + ")))
+
+        
+        out <- read.metharray(filenamesIn)
+
         save(out, file = '$RGChannelSet')
+
         ]]> </configfile>
         </configfiles>
         <inputs>
-            
             
              <!-- Counts and Factors -->
         <conditional name="input">
