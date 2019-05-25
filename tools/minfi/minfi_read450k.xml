@@ -5,13 +5,39 @@
     </macros>
     <expand macro="requirements" />
     <command detect_errors="exit_code"><![CDATA[
-      #for $counter, $file in enumerate($files_red):
-      ln -s $file ./${counter+1}_Red.idat &&
-      #end for
-      #for $counter, $file in enumerate($files_grn):
-      ln -s $file ./${counter+1}_Grn.idat &&
-      #end for
+
+      #import json
+Rscript '$__tool_directory__/limma_voom.R'
+-R '$outReport'
+-o '$outReport.files_path'
+#if $input.format=="files":
+    ## Adapted from DESeq2 wrapper
+    #set $temp_factor_names = list()
+    #for $fact in $input.rep_factor:
+        #set $temp_factor = list()
+        #for $g in $fact.rep_group:
+            #set $count_files = list()
+            #for $file in $g.countsFile:
+                $count_files.append(str($file))
+            #end for
+            $temp_factor.append( {str($g.groupName): $count_files} )
+        #end for
+        $temp_factor.reverse()
+        $temp_factor_names.append([str($fact.factorName), $temp_factor])
+    #end for
+    -j '#echo json.dumps(temp_factor_names)#'
+#elif $input.format=="matrix":
+    -m '$input.counts'
+    #if $input.fact.ffile=='yes':
+        -f '$input.fact.finfo'
+    #else:
+        -i '${ '|'.join( ['%s::%s' % ($x.factorName, $x.groupNames) for x in $input.fact.rep_factor] ) }'
+    #end if
+#end if
+
+
       Rscript '$read_idat_script'
+
       ]]></command>
       <configfiles>
       <configfile name="read_idat_script"><![CDATA[
@@ -25,14 +51,90 @@
         ]]> </configfile>
         </configfiles>
         <inputs>
+            
+            
+             <!-- Counts and Factors -->
+        <conditional name="input">
+            <param name="format" type="select" label="Count Files or Matrix?"
+                help="You can choose to input either separate count files (one per sample) or a single count matrix">
+                <option value="files">Separate Count Files</option>
+                <option value="matrix">Single Count Matrix</option>
+            </param>
+
+            <when value="files">
+                <repeat name="rep_factor" title="Factor" min="1">
+                    <param name="factorName" type="text" label="Name" help="Name of experiment factor of interest (e.g. Genotype). One factor must be entered and there must be two or more groups per factor. Optional additional factors (e.g. Batch) can be entered using the Insert Factor button below, see Help section for more information. NOTE: Please only use letters, numbers or underscores.">
+                    <sanitizer>
+                        <valid initial="string.letters,string.digits"><add value="_" /></valid>
+                    </sanitizer>
+                    </param>
+                    <repeat name="rep_group" title="Group" min="2" default="2">
+                        <param name="groupName" type="text" label="Name"
+                        help="Name of group that the counts files belong to (e.g. WT or Mut). NOTE: Please only use letters, numbers or underscores (case sensitive).">
+                        <sanitizer>
+                            <valid initial="string.letters,string.digits"><add value="_" /></valid>
+                        </sanitizer>
+                        </param>
+                        <param name="countsFile" type="data" format="tabular" multiple="true" label="Counts files"/>
+                    </repeat>
+                </repeat>
+            </when>
+
+            <when value="matrix">
+                <param name="counts" type="data" format="tabular" label="Count Matrix"/>
+
+                <conditional name="fact">
+                    <param name="ffile" type="select" label="Input factor information from file?"
+                        help="You can choose to input the factor and group information for the samples from a file or manually enter below. NOTE: Please only use letters, numbers or underscores (case sensitive), the group names MUST not contain hyphens.">
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                    </param>
+                    <when value="yes">
+                        <param name="finfo" type="data" format="tabular" label="Factor File"/>
+                    </when>
+                    <when value="no" >
+                        <repeat name="rep_factor" title="Factor" min="1">
+                            <param name="factorName" type="text" label="Factor Name"
+                                help="Name of experiment factor of interest (e.g. Genotype). One factor must be entered and there must be two or more groups per factor. Additional factors (e.g. Batch) can be entered using the Insert Factor button below, see Help section below. NOTE: Please only use letters, numbers or underscores.">
+                                <validator type="empty_field" />
+                                <validator type="regex" message="Please only use letters, numbers or underscores">^[\w]+$</validator>
+                            </param>
+                            <param name="groupNames" type="text" label="Groups"
+                                help="Enter the group names for the samples separated with commas e.g. WT,WT,WT,Mut,Mut,Mut. The order of the names must match the order of the samples in the columns of the count matrix. NOTE: Please only use letters, numbers or underscores (case sensitive), the group names MUST not contain hyphens.">
+                                <validator type="empty_field" />
+                                <validator type="regex" message="Please only use letters, numbers or underscores, and separate levels by commas">^[\w,]+$</validator>
+                            </param>
+                        </repeat>
+                    </when>
+                </conditional>
+            </when>
+        </conditional>
+            
+          
         <param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
         <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" />
+            
             </inputs>
             <outputs>
             <data name="RGChannelSet" format="rdata" label="RGChannelSet"/>
               </outputs>
              <tests>
         <test>
+            
+                        <param name="format" value="files" />
+            <repeat name="rep_factor">
+                <param name="factorName" value="Genotype"/>
+                <repeat name="rep_group">
+                    <param name="groupName" value="WT"/>
+                    <param name="countsFile" value="WT1.counts,WT2.counts,WT3.counts"/>
+                </repeat>
+                <repeat name="rep_group">
+                    <param name="groupName" value="Mut"/>
+                    <param name="countsFile" value="Mut1.counts,Mut2.counts,Mut3.counts"/>
+                </repeat>
+            </repeat>
+            
+            
             <param name="files_red" value="GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat" ftype="idat"/>
             <param name="files_grn" value="GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat" ftype="idat"/>
             <output name="RGChannelSet" file="RGChannelSet.rdata"/>
