@@ -7,10 +7,12 @@
     <command detect_errors="exit_code"><![CDATA[
 
       #import json
-Rscript '$__tool_directory__/limma_voom.R'
+Rscript '$read_idat_script'
+
 -R '$outReport'
 -o '$outReport.files_path'
 #if $input.format=="files":
+
     ## Adapted from DESeq2 wrapper
     #set $temp_factor_names = list()
     #for $fact in $input.rep_factor:
@@ -34,9 +36,6 @@ Rscript '$__tool_directory__/limma_voom.R'
         -i '${ '|'.join( ['%s::%s' % ($x.factorName, $x.groupNames) for x in $input.fact.rep_factor] ) }'
     #end if
 #end if
-
-
-      Rscript '$read_idat_script'
 
       ]]></command>
       <configfiles>
@@ -121,23 +120,20 @@ Rscript '$__tool_directory__/limma_voom.R'
              <tests>
         <test>
             
-                        <param name="format" value="files" />
+                <param name="format" value="files" />
             <repeat name="rep_factor">
                 <param name="factorName" value="Genotype"/>
                 <repeat name="rep_group">
                     <param name="groupName" value="WT"/>
-                    <param name="countsFile" value="WT1.counts,WT2.counts,WT3.counts"/>
+                    <param name="countsFile" value="GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat" ftype="idat"/>
                 </repeat>
                 <repeat name="rep_group">
                     <param name="groupName" value="Mut"/>
-                    <param name="countsFile" value="Mut1.counts,Mut2.counts,Mut3.counts"/>
+                    <param name="countsFile" value="GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat" ftype="idat"/>
                 </repeat>
             </repeat>
             
-            
-            <param name="files_red" value="GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat" ftype="idat"/>
-            <param name="files_grn" value="GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat" ftype="idat"/>
-            <output name="RGChannelSet" file="RGChannelSet.rdata"/>
+           <output name="RGChannelSet" file="RGChannelSet.rdata"/>
         </test>
     </tests>
     <help><![CDATA[
