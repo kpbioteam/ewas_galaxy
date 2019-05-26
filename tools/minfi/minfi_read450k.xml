@@ -6,11 +6,11 @@
     <expand macro="requirements" />
     <command detect_errors="exit_code"><![CDATA[
 
-      #import json
+#import json
 Rscript '$read_idat_script'
-
+-R '$outReport'
+-o '$outReport.files_path'
 #if $input.format=="files":
-
     ## Adapted from DESeq2 wrapper
     #set $temp_factor_names = list()
     #for $fact in $input.rep_factor:
@@ -33,6 +33,66 @@ Rscript '$read_idat_script'
     #else:
         -i '${ '|'.join( ['%s::%s' % ($x.factorName, $x.groupNames) for x in $input.fact.rep_factor] ) }'
     #end if
+#end if
+#if $anno.annoOpt=='yes':
+    -a '$anno.geneanno'
+#end if
+-C '${ ','.join( ['%s' % $x.contrast for x in $rep_contrast] ) }'
+#if $f.filt.filt_select == 'yes':
+    #if $f.filt.cformat.format_select == 'cpm':
+        -c '$f.filt.cformat.cpmReq'
+        -s '$f.filt.cformat.cpmSampleReq'
+    #elif $f.filt.cformat.format_select == 'counts':
+            -z '$f.filt.cformat.cntReq'
+        #if $f.filt.cformat.samples.count_select == 'total':
+            -y
+        #elif $f.filt.cformat.samples.count_select == 'sample':
+            -s '$f.filt.cformat.samples.cntSampleReq'
+        #end if
+    #end if
+#end if
+#if $out.plots:
+    -P $out.plots
+#end if
+#if $out.filtCounts:
+    -F
+#end if
+#if $out.normCounts:
+    -x
+#end if
+#if $out.libinfo:
+    -L
+#end if
+#if $out.rdaOption:
+    -r
+#end if
+-l '$adv.lfc'
+-p '$adv.pVal'
+-d '$adv.pAdjust'
+-G '$adv.topgenes'
+#if $adv.treat:
+    -T
+#end if
+#if $deMethod.de_select == 'voom':
+    #if $deMethod.weightOption:
+        -w
+    #end if
+#elif $deMethod.de_select == 'trend':
+    -t $deMethod.prior_count
+#end if
+-n '$adv.normalisationOption'
+#if $adv.robOption:
+    -b
+#end if
+&&
+mkdir ./output_dir
+&&
+cp '$outReport.files_path'/*tsv output_dir/
+#if 'i' in str($out.plots).split( "," ):
+    && cp -r ./glimma* '$outReport.files_path'
+#end if
+#if $out.filtCounts or $out.normCounts:
+    && cp '$outReport.files_path'/*counts output_dir/
 #end if
 
       ]]></command>
