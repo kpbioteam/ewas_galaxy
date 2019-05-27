@@ -32,7 +32,6 @@ with os.scandir(path) as listOfEntries:
         <inputs>
         <param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
         <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" />
-        <param type="data" name="names" format="tabular" label="Sample Table"/>
             </inputs>
             <outputs>
             <data name="RGChannelSet" format="rdata" label="RGChannelSet"/>
@@ -41,7 +40,6 @@ with os.scandir(path) as listOfEntries:
         <test>
             <param name="files_red" value="GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat" ftype="idat"/>
             <param name="files_grn" value="GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat" ftype="idat"/>
-            <param name="names" file="matrix.txt"/>
             <output name="RGChannelSet" file="RGChannelSet.rdata"/>
         </test>
     </tests>
