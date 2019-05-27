@@ -4,6 +4,19 @@
         <requirement type="package" version="1.24.0">bioconductor-minfi</requirement>
     </requirements>
     <command detect_errors="exit_code"><![CDATA[
+
+import os
+
+# detect the current working directory
+path = os.getcwd()
+
+# read the entries
+with os.scandir(path) as listOfEntries:  
+    for entry in listOfEntries:
+        # print all entries that are files
+        if entry.is_file():
+            print(entry.name)
+
       #for $counter, $file in enumerate($files_red):
       ln -s $file ./${counter+1}_Red.idat &&
         #end for
@@ -22,7 +35,7 @@
       #for $counter, $input in enumerate($files_red):
       files['${counter+1}'] <- '${counter+1}'
         #end for
-        out <- read.metharray(file_names)
+        out <- read.metharray(c(file_names))
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
         </configfiles>
