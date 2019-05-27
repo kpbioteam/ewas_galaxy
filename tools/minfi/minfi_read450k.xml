@@ -8,7 +8,7 @@
 import os
 
 # detect the current working directory
-path = os.getcwd()
+path = os.getcwd($files_red)
 
 # read the entries
 with os.scandir(path) as listOfEntries:  
@@ -17,25 +17,15 @@ with os.scandir(path) as listOfEntries:
         if entry.is_file():
             print(entry.name)
 
-      #for $counter, $file in enumerate($files_red):
-      ln -s $file ./${counter+1}_Red.idat &&
-        #end for
-      
-      #for $counter, $file in enumerate($files_grn):
-      ln -s $file ./${counter+1}_Grn.idat &&
-        #end for
       cat '$read_idat_script' &&
       Rscript '$read_idat_script'
       ]]></command>
       <configfiles>
       <configfile name="read_idat_script"><![CDATA[
         require("minfi", quietly = TRUE)
-        files <- list()     
-        file_names <- as.character(unlist(read.table("$names", sep=",")))
-      #for $counter, $input in enumerate($files_red):
-      files['${counter+1}'] <- '${counter+1}'
-        #end for
-        out <- read.metharray(c(file_names))
+
+        out <- read.metharray(entry.name)
+
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
         </configfiles>
