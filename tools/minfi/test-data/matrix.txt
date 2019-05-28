@@ -1,0 +1,5 @@
+FileName        Sensitivity     Treatment
+GSM1588704_8795207135_R01C02    sensitive       MAPKi
+GSM1588705_8795207119_R05C02    sensitive       MAPKi
+GSM1588706_8795207135_R02C02    resistant       BRAFi
+GSM1588707_8795207119_R06C02    resistant       BRAFi
