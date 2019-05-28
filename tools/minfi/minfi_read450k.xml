@@ -22,7 +22,294 @@ with os.scandir(path) as listOfEntries:
       ]]></command>
       <configfiles>
       <configfile name="read_idat_script"><![CDATA[
-        require("minfi", quietly = TRUE)
+        timeStart <- as.character(Sys.time())
+
+# Load all required libraries
+library(methods, quietly=TRUE, warn.conflicts=FALSE)
+library(statmod, quietly=TRUE, warn.conflicts=FALSE)
+library(splines, quietly=TRUE, warn.conflicts=FALSE)
+library(edgeR, quietly=TRUE, warn.conflicts=FALSE)
+library(limma, quietly=TRUE, warn.conflicts=FALSE)
+library(scales, quietly=TRUE, warn.conflicts=FALSE)
+library(getopt, quietly=TRUE, warn.conflicts=FALSE)
+library(gplots, quietly=TRUE, warn.conflicts=FALSE)
+
+################################################################################
+### Function Declaration
+################################################################################
+# Function to sanitise contrast equations so there are no whitespaces
+# surrounding the arithmetic operators, leading or trailing whitespace
+sanitiseEquation <- function(equation) {
+    equation <- gsub(" *[+] *", "+", equation)
+    equation <- gsub(" *[-] *", "-", equation)
+    equation <- gsub(" *[/] *", "/", equation)
+    equation <- gsub(" *[*] *", "*", equation)
+    equation <- gsub("^\\s+|\\s+$", "", equation)
+    return(equation)
+}
+
+# Function to sanitise group information
+sanitiseGroups <- function(string) {
+    string <- gsub(" *[,] *", ",", string)
+    string <- gsub("^\\s+|\\s+$", "", string)
+    return(string)
+}
+
+# Function to change periods to whitespace in a string
+unmake.names <- function(string) {
+    string <- gsub(".", " ", string, fixed=TRUE)
+    return(string)
+}
+
+# Generate output folder and paths
+makeOut <- function(filename) {
+    return(paste0(opt$outPath, "/", filename))
+}
+
+# Generating design information
+pasteListName <- function(string) {
+    return(paste0("factors$", string))
+}
+
+# Create cata function: default path set, default seperator empty and appending
+# true by default (Ripped straight from the cat function with altered argument
+# defaults)
+cata <- function(..., file = opt$htmlPath, sep = "", fill = FALSE, labels = NULL,
+               append = TRUE) {
+    if (is.character(file))
+        if (file == "")
+            file <- stdout()
+        else if (substring(file, 1L, 1L) == "|") {
+            file <- pipe(substring(file, 2L), "w")
+            on.exit(close(file))
+        }
+        else {
+        file <- file(file, ifelse(append, "a", "w"))
+      on.exit(close(file))
+        }
+    .Internal(cat(list(...), file, sep, fill, labels, append))
+}
+
+# Function to write code for html head and title
+HtmlHead <- function(title) {
+    cata("<head>\n")
+    cata("<title>", title, "</title>\n")
+    cata("</head>\n")
+}
+
+# Function to write code for html links
+HtmlLink <- function(address, label=address) {
+    cata("<a href=\"", address, "\" target=\"_blank\">", label, "</a><br />\n")
+}
+
+# Function to write code for html images
+HtmlImage <- function(source, label=source, height=500, width=500) {
+    cata("<img src=\"", source, "\" alt=\"", label, "\" height=\"", height)
+    cata("\" width=\"", width, "\"/>\n")
+}
+
+# Function to write code for html list items
+ListItem <- function(...) {
+    cata("<li>", ..., "</li>\n")
+}
+
+TableItem <- function(...) {
+    cata("<td>", ..., "</td>\n")
+}
+
+TableHeadItem <- function(...) {
+    cata("<th>", ..., "</th>\n")
+}
+
+################################################################################
+### Input Processing
+################################################################################
+
+# Collect arguments from command line
+args <- commandArgs(trailingOnly=TRUE)
+
+# Get options, using the spec as defined by the enclosed list.
+# Read the options from the default: commandArgs(TRUE).
+spec <- matrix(c(
+    "htmlPath", "R", 1, "character",
+    "outPath", "o", 1, "character",
+    "filesPath", "j", 2, "character",
+    "matrixPath", "m", 2, "character",
+    "factFile", "f", 2, "character",
+    "factInput", "i", 2, "character",
+    "annoPath", "a", 2, "character",
+    "contrastData", "C", 1, "character",
+    "cpmReq", "c", 1, "double",
+    "totReq", "y", 0, "logical",
+    "cntReq", "z", 1, "integer",
+    "sampleReq", "s", 1, "integer",
+    "filtCounts", "F", 0, "logical",
+    "normCounts", "x", 0, "logical",
+    "rdaOpt", "r", 0, "logical",
+    "lfcReq", "l", 1, "double",
+    "pValReq", "p", 1, "double",
+    "pAdjOpt", "d", 1, "character",
+    "normOpt", "n", 1, "character",
+    "robOpt", "b", 0, "logical",
+    "trend", "t", 1, "double",
+    "weightOpt", "w", 0, "logical",
+    "topgenes", "G", 1, "integer",
+    "treatOpt", "T", 0, "logical",
+    "plots", "P", 1, "character",
+    "libinfoOpt", "L", 0, "logical"),
+    byrow=TRUE, ncol=4)
+opt <- getopt(spec)
+
+
+if (is.null(opt$matrixPath) & is.null(opt$filesPath)) {
+    cat("A counts matrix (or a set of counts files) is required.\n")
+    q(status=1)
+}
+
+if (is.null(opt$cpmReq)) {
+    filtCPM <- FALSE
+} else {
+    filtCPM <- TRUE
+}
+
+if (is.null(opt$cntReq) || is.null(opt$sampleReq)) {
+    filtSmpCount <- FALSE
+} else {
+    filtSmpCount <- TRUE
+}
+
+if (is.null(opt$totReq)) {
+    filtTotCount <- FALSE
+} else {
+    filtTotCount <- TRUE
+}
+
+if (is.null(opt$rdaOpt)) {
+    wantRda <- FALSE
+} else {
+    wantRda <- TRUE
+}
+
+if (is.null(opt$annoPath)) {
+    haveAnno <- FALSE
+} else {
+    haveAnno <- TRUE
+}
+
+if (is.null(opt$filtCounts)) {
+    wantFilt <- FALSE
+} else {
+    wantFilt <- TRUE
+}
+
+if (is.null(opt$normCounts)) {
+    wantNorm <- FALSE
+} else {
+    wantNorm <- TRUE
+}
+
+if (is.null(opt$robOpt)) {
+    wantRobust <- FALSE
+} else {
+    wantRobust <- TRUE
+}
+
+if (is.null(opt$weightOpt)) {
+    wantWeight <- FALSE
+} else {
+    wantWeight <- TRUE
+}
+
+if (is.null(opt$trend)) {
+    wantTrend <- FALSE
+    deMethod <- "limma-voom"
+} else {
+    wantTrend <- TRUE
+    deMethod <- "limma-trend"
+    priorCount <- opt$trend
+}
+
+if (is.null(opt$treatOpt)) {
+    wantTreat <- FALSE
+} else {
+    wantTreat <- TRUE
+}
+
+if (is.null(opt$libinfoOpt)) {
+    wantLibinfo <- FALSE
+} else {
+    wantLibinfo <- TRUE
+}
+
+
+if (!is.null(opt$filesPath)) {
+    # Process the separate count files (adapted from DESeq2 wrapper)
+    library("rjson")
+    library("minfi")
+
+    parser <- newJSONParser()
+    parser$addData(opt$filesPath)
+    factorList <- parser$getObject()
+    factors <- sapply(factorList, function(x) x[[1]])
+    filenamesIn <- unname(unlist(factorList[[1]][[2]]))
+    sampleTable <- data.frame(sample=basename(filenamesIn),
+                            filename=filenamesIn,
+                            row.names=filenamesIn,
+                            stringsAsFactors=FALSE)
+    for (factor in factorList) {
+        factorName <- factor[[1]]
+        sampleTable[[factorName]] <- character(nrow(sampleTable))
+        lvls <- sapply(factor[[2]], function(x) names(x))
+        for (i in seq_along(factor[[2]])) {
+            files <- factor[[2]][[i]][[1]]
+            sampleTable[files,factorName] <- lvls[i]
+        }
+        sampleTable[[factorName]] <- factor(sampleTable[[factorName]], levels=lvls)
+    }
+    rownames(sampleTable) <- sampleTable$sample
+    rem <- c("sample","filename")
+    factors <- sampleTable[, !(names(sampleTable) %in% rem), drop=FALSE]
+
+    #read in count files and create single table
+    countfiles <- lapply(sampleTable$filename, function(x){read.delim(x, row.names=1)})
+    counts <- do.call("cbind", countfiles)
+
+} else {
+    # Process the single count matrix
+    counts <- read.table(opt$matrixPath, header=TRUE, sep="\t", strip.white=TRUE, stringsAsFactors=FALSE, check.names=FALSE)
+    row.names(counts) <- counts[, 1]
+    counts <- counts[ , -1]
+    countsRows <- nrow(counts)
+
+    # Process factors
+    if (is.null(opt$factInput)) {
+        factorData <- read.table(opt$factFile, header=TRUE, sep="\t", strip.white=TRUE)
+        if(!setequal(factorData[, 1], colnames(counts)))
+            stop("Sample IDs in counts and factors files don't match")
+        # order samples as in counts matrix
+        factorData <- factorData[match(colnames(counts), factorData[, 1]), ]
+        factors <- factorData[, -1, drop=FALSE]
+    }  else {
+        factors <- unlist(strsplit(opt$factInput, "|", fixed=TRUE))
+        factorData <- list()
+        for (fact in factors) {
+            newFact <- unlist(strsplit(fact, split="::"))
+            factorData <- rbind(factorData, newFact)
+        } # Factors have the form: FACT_NAME::LEVEL,LEVEL,LEVEL,LEVEL,... The first factor is the Primary Factor.
+
+        # Set the row names to be the name of the factor and delete first row
+        row.names(factorData) <- factorData[, 1]
+        factorData <- factorData[, -1]
+        factorData <- sapply(factorData, sanitiseGroups)
+        factorData <- sapply(factorData, strsplit, split=",")
+        # Transform factor data into data frame of R factor objects
+        factors <- data.frame(factorData)
+    }
+}
+# check there are the same number of samples in counts and factors
+if(nrow(factors) != ncol(counts)) {
+    stop("There are a different number of samples in the counts files and factors")
+}
 
         out <- read.metharray(entry.name)
 
