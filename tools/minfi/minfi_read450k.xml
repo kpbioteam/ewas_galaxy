@@ -120,7 +120,6 @@ with os.scandir(path) as listOfEntries:
                 </repeat>
             <output name="RGChannelSet" file="RGChannelSet.rdata"/>
             </output>
-        </test>
         
         </test>
     </tests>
