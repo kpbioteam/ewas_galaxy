@@ -1,8 +1,8 @@
 <tool id="minfi_read450k" name="Minfi Read 450k" version="2.1.0">
     <description>load .IDAT files</description>
-    <requirements>
-        <requirement type="package" version="1.24.0">bioconductor-minfi</requirement>
-    </requirements>
+  <macros>
+        <import>macros.xml</import>
+  </macros>
     <command detect_errors="exit_code"><![CDATA[
 
 import os
