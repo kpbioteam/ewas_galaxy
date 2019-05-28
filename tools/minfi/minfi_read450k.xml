@@ -30,8 +30,62 @@ with os.scandir(path) as listOfEntries:
         ]]> </configfile>
         </configfiles>
         <inputs>
-        <param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
-        <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" />
+            <!-- Counts and Factors -->
+        <conditional name="input">
+            <param name="format" type="select" label="Count Files or Matrix?"
+                help="You can choose to input either separate count files (one per sample) or a single count matrix">
+                <option value="files">Separate Count Files</option>
+                <option value="matrix">Single Count Matrix</option>
+            </param>
+
+            <when value="files">
+                <repeat name="rep_factor" title="Factor" min="1">
+                    <param name="factorName" type="text" label="Name" help="Name of experiment factor of interest (e.g. Genotype). One factor must be entered and there must be two or more groups per factor. Optional additional factors (e.g. Batch) can be entered using the Insert Factor button below, see Help section for more information. NOTE: Please only use letters, numbers or underscores.">
+                    <sanitizer>
+                        <valid initial="string.letters,string.digits"><add value="_" /></valid>
+                    </sanitizer>
+                    </param>
+                    <repeat name="rep_group" title="Group" min="2" default="2">
+                        <param name="groupName" type="text" label="Name"
+                        help="Name of group that the counts files belong to (e.g. WT or Mut). NOTE: Please only use letters, numbers or underscores (case sensitive).">
+                        <sanitizer>
+                            <valid initial="string.letters,string.digits"><add value="_" /></valid>
+                        </sanitizer>
+                        </param>
+                        <param name="idatsFile" type="data" format="tabular" multiple="true" label="Counts files"/>
+                    </repeat>
+                </repeat>
+            </when>
+
+            <when value="matrix">
+                <param name="counts" type="data" format="tabular" label="Count Matrix"/>
+
+                <conditional name="fact">
+                    <param name="ffile" type="select" label="Input factor information from file?"
+                        help="You can choose to input the factor and group information for the samples from a file or manually enter below. NOTE: Please only use letters, numbers or underscores (case sensitive), the group names MUST not contain hyphens.">
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                    </param>
+                    <when value="yes">
+                        <param name="finfo" type="data" format="tabular" label="Factor File"/>
+                    </when>
+                    <when value="no" >
+                        <repeat name="rep_factor" title="Factor" min="1">
+                            <param name="factorName" type="text" label="Factor Name"
+                                help="Name of experiment factor of interest (e.g. Genotype). One factor must be entered and there must be two or more groups per factor. Additional factors (e.g. Batch) can be entered using the Insert Factor button below, see Help section below. NOTE: Please only use letters, numbers or underscores.">
+                                <validator type="empty_field" />
+                                <validator type="regex" message="Please only use letters, numbers or underscores">^[\w]+$</validator>
+                            </param>
+                            <param name="groupNames" type="text" label="Groups"
+                                help="Enter the group names for the samples separated with commas e.g. WT,WT,WT,Mut,Mut,Mut. The order of the names must match the order of the samples in the columns of the count matrix. NOTE: Please only use letters, numbers or underscores (case sensitive), the group names MUST not contain hyphens.">
+                                <validator type="empty_field" />
+                                <validator type="regex" message="Please only use letters, numbers or underscores, and separate levels by commas">^[\w,]+$</validator>
+                            </param>
+                        </repeat>
+                    </when>
+                </conditional>
+            </when>
+        </conditional>
             </inputs>
             <outputs>
             <data name="RGChannelSet" format="rdata" label="RGChannelSet"/>
