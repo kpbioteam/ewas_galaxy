@@ -119,8 +119,6 @@ with os.scandir(path) as listOfEntries:
                     GSM1588707_8795207119_R06C02_Red.idat, GSM1588707_8795207119_R06C02_Grn.idat"/>
                 </repeat>
             <output name="RGChannelSet" file="RGChannelSet.rdata"/>
-            </output>
-        
         </test>
     </tests>
 
