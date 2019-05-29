@@ -12,6 +12,10 @@
             
          #silent dataset_names.append( "'%_Red.idat'" % $input_name )
          ln -s "${input_name}_Red.idat" &&
+
+         #silent dataset_names.append( "'%_Grn.idat'" % $input_name )
+         ln -s "${input_name}_Grn.idat" &&
+
         #end for
 Rscript '$read_idat_script'
       ]]></command>
