@@ -15,7 +15,7 @@
             bgzip '${input_name}.vcf.sorted' &&
             ## Index.
             tabix -p vcf '${input_name}.vcf.sorted.gz' &&
-            #silent dataset_names.append( "'%_Red.idat'" % $input_name )
+            #silent dataset_names.append( "'%Red.idat'" % $input_name )
         #end for
 Rscript '$read_idat_script'
       ]]></command>
