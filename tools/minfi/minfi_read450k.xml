@@ -24,7 +24,7 @@ Rscript '$read_idat_script'
 #for $name in $names:
     "${name}"
 #end for
-        out <- read.metharray(names)
+        out <- read.metharray(name)
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
         </configfiles>
