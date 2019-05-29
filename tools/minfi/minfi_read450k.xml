@@ -4,27 +4,25 @@
         <requirement type="package" version="1.24.0">bioconductor-minfi</requirement>
     </requirements>
     <command detect_errors="exit_code"><![CDATA[
-#set $names = []
-#for $input_count, $input_classification in enumerate( $files_red ):
-    #set $name_base = str( getattr( $input_classification, 'element_identifier', 'sample' ) ).replace( "/", '-' ).replace( "\t", "-" )
-    #set $name = $name_base
-    #set $i = 1
-    #while $name in $names:
-        #set $name = "%s_%s" % ( $name_base, $i )
-        #set $i = $i + 1
-    #end while
-    #silent $names.append( $name )
-    ln -s "${input_classification}" "${name}" &&
-#end for
+        ## Preprocessing for each dataset.
+        #import re
+        #set dataset_names = []
+        #for $i, $input in enumerate( $input_files ):
+            #set input_name = re.sub('[^\w\-_]', '_', $input.element_identifier)
+            ## Sort file.
+            vcf-sort '${input}' > '${input_name}.vcf.sorted' &&
+            ## Compress.
+            bgzip '${input_name}.vcf.sorted' &&
+            ## Index.
+            tabix -p vcf '${input_name}.vcf.sorted.gz' &&
+            #silent dataset_names.append( "'%_Red.idat'" % $input_name )
+        #end for
 Rscript '$read_idat_script'
       ]]></command>
       <configfiles>
       <configfile name="read_idat_script"><![CDATA[
      require("minfi", quietly = TRUE)
-#for $name in $names:
-    "${name}"
-#end for
-        out <- read.metharray(name)
+        out <- read.metharray($input_name)
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
         </configfiles>
