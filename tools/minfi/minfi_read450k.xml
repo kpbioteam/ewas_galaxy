@@ -9,13 +9,9 @@
         #set dataset_names = []
         #for $i, $input in enumerate( $input_files ):
             #set input_name = re.sub('[^\w\-_]', '_', $input.element_identifier)
-            ## Sort file.
-            vcf-sort '${input}' > '${input_name}.vcf.sorted' &&
-            ## Compress.
-            bgzip '${input_name}.vcf.sorted' &&
-            ## Index.
-            tabix -p vcf '${input_name}.vcf.sorted.gz' &&
-            #silent dataset_names.append( "'%Red.idat'" % $input_name )
+            
+         #silent dataset_names.append( "'%_Red.idat'" % $input_name )
+         ln -s "${input_name}_Red.idat" &&
         #end for
 Rscript '$read_idat_script'
       ]]></command>
