@@ -16,7 +16,8 @@
         #for $counter, $input in enumerate($idat_files):
         files['${counter+1}'] <- '${input.element_identifier}'
         #end for
-        out <- read.metharray(unique(c(files)))
+        basenames <- files[!duplicated(files)]
+        out <- read.metharray(basenames)
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
         </configfiles>
