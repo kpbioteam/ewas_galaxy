@@ -2,7 +2,7 @@
     <description>load .IDAT files</description>
     <requirements>
         <requirement type="package" version="1.24.0">bioconductor-minfi</requirement>
-    </requirements>
+    </requirements>    
     <command detect_errors="exit_code"><![CDATA[
       #for $file, $input in enumerate($idat_files):
         ln -s $file ./${input.element_identifier} &&
@@ -16,7 +16,8 @@
         #for $counter, $input in enumerate($idat_files):
         files['${counter+1}'] <- '${input.element_identifier}'
         #end for
-        out <- read.metharray(unique(files))
+        files <- list.files(pattern="\\._Red.idat$")
+        out <- read.metharray(files)
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
         </configfiles>
