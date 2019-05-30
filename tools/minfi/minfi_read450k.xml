@@ -12,8 +12,7 @@
       <configfiles>
       <configfile name="read_idat_script"><![CDATA[
         require("minfi", quietly = TRUE)
-        myset <- set()
-        files<-list(myset)
+        files<-list(set())
         #for $counter, $input in enumerate($idat_files):
         files['${counter+1}'] <- '${input.element_identifier}'
         #end for
