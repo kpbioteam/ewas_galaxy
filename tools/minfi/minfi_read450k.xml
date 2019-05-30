@@ -4,10 +4,10 @@
         <requirement type="package" version="1.24.0">bioconductor-minfi</requirement>
     </requirements>
     <command detect_errors="exit_code"><![CDATA[
-      #for $file, $input in enumerate($files_red):
+      #for $file, $input in $files_red:
         ln -s $file ./${input.element_identifier} &&
       #end for
-      #for $file, $input in enumerate($files_grn):
+      #for $file, $input in $files_grn:
         ln -s $file ./${input.element_identifier} &&
       #end for
       Rscript '$read_idat_script'
