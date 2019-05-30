@@ -12,11 +12,11 @@
       <configfiles>
       <configfile name="read_idat_script"><![CDATA[
         require("minfi", quietly = TRUE)
-        files<-list()
+        myset <- set()
+        files<-list(myset)
         #for $counter, $input in enumerate($idat_files):
         files['${counter+1}'] <- '${input.element_identifier}'
         #end for
-        basenames <- files[!duplicated(files)]
         out <- read.metharray(basenames)
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
