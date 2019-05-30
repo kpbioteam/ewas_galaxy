@@ -14,9 +14,10 @@
         require("minfi", quietly = TRUE)
         files<-list()
         #for $counter, $input in enumerate($idat_files):
-        files['${counter+1}'] <- set('${input.element_identifier}')
+        files['${counter+1}'] <- '${input.element_identifier}'
+        files <- list(set(files))
         #end for
-        out <- read.metharray(basenames)
+        out <- read.metharray(files)
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
         </configfiles>
