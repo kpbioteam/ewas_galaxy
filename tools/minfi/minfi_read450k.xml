@@ -5,7 +5,7 @@
     </requirements>
     <command detect_errors="exit_code"><![CDATA[
       #for $file, $input in enumerate($idat_files):
-        ln -s $file ./${set(input.element_identifier)} &&
+        ln -s $file ./${input.element_identifier} &&
       #end for
       Rscript '$read_idat_script'
       ]]></command>
@@ -16,7 +16,7 @@
         #for $counter, $input in enumerate($idat_files):
         files['${counter+1}'] <- '${input.element_identifier}'
         #end for
-        out <- read.metharray(files)
+        out <- read.metharray(unique(files))
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
         </configfiles>
