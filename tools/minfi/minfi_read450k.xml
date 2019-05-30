@@ -20,6 +20,7 @@
         removeRed <- gsub('_Red.idat','', removeGrn) 
         unique <- as.list(unique(removeRed))
         out <- read.metharray(unique)
+        print(unique)
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
         </configfiles>
