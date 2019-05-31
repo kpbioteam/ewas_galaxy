@@ -5,10 +5,10 @@
     </requirements>    
     <command detect_errors="exit_code"><![CDATA[
 #for  $file in enumerate($files_red):
-        ln -s $file ./${input.element_identifier}_Red.idat &&
+        ln -s $file "${input.element_identifier}" "{counter+1}_Red.idat" &&
       #end for
       #for $file in enumerate($files_grn):
-            ln -s $file ./${input.element_identifier}_Grn.idat &&
+            ln -s $file "${input.element_identifier}" "{counter+1}_Grn.idat" &&
       #end for
       Rscript '$read_idat_script'
       ]]></command>
