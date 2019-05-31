@@ -17,7 +17,7 @@
         require("minfi", quietly = TRUE)
         files<-list()
         #for $counter, $input in enumerate($files_red):
-        files['${counter+1}'] <- '${input.element_identifier//[_Red.idat\_Grn.idat]/}'
+        files['${counter+1}'] <- echo ${input.element_identifier//[_Red.idat\_Grn.idat]/}
         #end for
         out <- read.metharray(files)
         save(out, file = '$RGChannelSet')
