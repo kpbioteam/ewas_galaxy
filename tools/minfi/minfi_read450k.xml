@@ -4,22 +4,28 @@
         <requirement type="package" version="1.24.0">bioconductor-minfi</requirement>
     </requirements>    
     <command detect_errors="exit_code"><![CDATA[
-      #for $file, $input in enumerate($idat_files):
-        ln -s $file ${input.element_identifier} &&
-      #end for
+      #set $names = []
+ #for $file, $input in enumerate($idat_files):
+      #set $name_base = str( getattr( $input, 'element_identifier', 'sample' ) ).replace( "/", '-' ).replace( "\t", "-" )
+      #set $name = $name_base
+      #set $i = 1
+      #while $name in $names:
+        #set $name = "%s_%s" % ( $name_base, $i )
+        #set $i = $i + 1
+      #end while
+      #silent $names.append( $name )
+      ln -s "${input}" "${name}" &&
+ #end for
       Rscript '$read_idat_script'
       ]]></command>
       <configfiles>
       <configfile name="read_idat_script"><![CDATA[
         require("minfi", quietly = TRUE)
-        files <- list()
-        #for $counter, $input in enumerate($idat_files):
-        files['${counter+1}'] <- '${input.element_identifier}'
+        names <- list()
+        #for $name in $names:
+            "${name}"
         #end for
-        removeGrn <- gsub('_Grn.idat','', files) 
-        removeRed <- gsub('_Red.idat','', removeGrn) 
-        unique <- as.list(unique(removeRed))
-        out <- read.metharray(unique)
+        out <- read.metharray(names)
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
         </configfiles>
