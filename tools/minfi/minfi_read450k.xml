@@ -5,7 +5,7 @@
     </requirements>    
     <command detect_errors="exit_code"><![CDATA[
       #for $file, $input in enumerate($idat_files):
-        ln -s $file ./${input.element_identifier} &&
+        ln -s $file "${input.element_identifier}" &&
       #end for
       Rscript '$read_idat_script'
       ]]></command>
