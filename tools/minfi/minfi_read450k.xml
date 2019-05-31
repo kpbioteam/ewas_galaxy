@@ -6,7 +6,7 @@
     <command detect_errors="exit_code"><![CDATA[
       #set $names = []
  #for $file, $input in enumerate($idat_files):
-      #set $name_base = str( getattr( $input, 'element_identifier', 'sample' ) )
+      #set $name_base = str( getattr( $input, 'element_identifier', 'sample' ) ).replace( "/", '-' ).replace( "\t", "-" )
       #set $name = $name_base
       #set $i = 1
       #while $name in $names:
@@ -21,7 +21,6 @@
       <configfiles>
       <configfile name="read_idat_script"><![CDATA[
         require("minfi", quietly = TRUE)
-        names <- list()
         #for $name in $names:
             "${name}"
         #end for
