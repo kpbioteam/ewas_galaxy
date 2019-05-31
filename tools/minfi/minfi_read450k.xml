@@ -21,7 +21,7 @@
       <configfiles>
       <configfile name="read_idat_script"><![CDATA[
         require("minfi", quietly = TRUE)
-        print(names)
+        print(input)
         out <- read.metharray(as.list(names))
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
