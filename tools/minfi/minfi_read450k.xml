@@ -19,6 +19,7 @@
         #for $counter, $input in enumerate($files_red):
         files['${counter+1}'] <- '${counter+1}'
         #end for
+        print (files)
         out <- read.metharray(files)
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
