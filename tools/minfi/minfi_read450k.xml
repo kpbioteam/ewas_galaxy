@@ -4,10 +4,10 @@
         <requirement type="package" version="1.24.0">bioconductor-minfi</requirement>
     </requirements>    
     <command detect_errors="exit_code"><![CDATA[
-      #for $file in enumerate($files_red):
+      #for $input, $file in enumerate($files_red):
         ln -s $file ${input.element_identifier}_Red.idat &&
       #end for
-      #for $file in enumerate($files_grn):
+      #for $input, $file in enumerate($files_grn):
             ln -s $file ${input.element_identifier}_Grn.idat &&
       #end for
       Rscript '$read_idat_script'
@@ -19,7 +19,6 @@
         #for $input in enumerate($files_red):
         "${input.element_identifier}"
         #end for
-        print (files)
         out <- read.metharray(files)
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
