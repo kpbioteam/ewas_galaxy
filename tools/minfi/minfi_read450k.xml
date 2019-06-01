@@ -8,7 +8,7 @@
       #for $counter, $input in enumerate($files_red):
         #set $name = $input.element_identfier
         ln -s $file ./${name} &&
-        # set $files_red['${counter+1}] =$input.element_identfier
+        # set $files_red['${counter+1}'] =$input.element_identfier
       #end for
       #for $counter, $file in enumerate($files_grn):
             ln -s $file ./${file.element_identfier} &&
