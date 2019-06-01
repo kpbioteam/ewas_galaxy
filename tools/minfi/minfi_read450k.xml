@@ -5,10 +5,10 @@
     </requirements>
     <command detect_errors="exit_code"><![CDATA[
       #for $counter, $file in enumerate($files_red):
-        ln -s $file ./${counter+1}_Red.idat &&
+        ln -s $file ./${file.element_identfier} &&
       #end for
       #for $counter, $file in enumerate($files_grn):
-            ln -s $file ./${counter+1}_Grn.idat &&
+            ln -s $file ./${file.element_identfier} &&
       #end for
       Rscript '$read_idat_script'
       ]]></command>
@@ -17,7 +17,7 @@
         require("minfi", quietly = TRUE)
         files<-list()
         #for $counter, $input in enumerate($files_red):
-        files['${counter+1}'] <- '${counter+1}'
+        files['${counter+1}'] <- '${input.element_identfier}'
         #end for
         out <- read.metharray(files)
         save(out, file = '$RGChannelSet')
