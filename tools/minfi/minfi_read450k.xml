@@ -6,7 +6,7 @@
     <command detect_errors="exit_code"><![CDATA[
 
       #for $counter, $input in enumerate($files_red):
-        #set $name = ${input.element_identfier}
+        #set $name = $input.element_identfier
         ln -s $file ./${name} &&
         #set $files_red['${counter+1}'] ='${name}'
       #end for
