@@ -4,11 +4,11 @@
         <requirement type="package" version="1.24.0">bioconductor-minfi</requirement>
     </requirements>
     <command detect_errors="exit_code"><![CDATA[
-      #set $names = []
+
       #for $counter, $input in enumerate($files_red):
         #set $name = $input.element_identfier
-        #silent $names.append( $name )
         ln -s $file ./${name} &&
+        # set $files_red['${counter+1}] =$input.element_identfier
       #end for
       #for $counter, $file in enumerate($files_grn):
             ln -s $file ./${file.element_identfier} &&
@@ -19,7 +19,7 @@
       <configfile name="read_idat_script"><![CDATA[
         require("minfi", quietly = TRUE)
         files<-list()
-        #for $counter, $input in enumerate($names):
+        #for $counter, $input in enumerate($files_red):
         files['${counter+1}'] <- '${input}'
         #end for
         out <- read.metharray(files)
