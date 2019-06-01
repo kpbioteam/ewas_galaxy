@@ -8,13 +8,13 @@
        #set grnnames=[]
 
       #for $counter, $input in enumerate($files_red):
-        #set $redname = $input.element_identfier
+        #set $redname = str( getattr( $input, 'element_identifier', 'sample' ) ).replace( "/", '-' ).replace( "\t", "-" )
         #silent $rednames.append( $redname )
         ln -s $input ./${redname} &&
         ln -s ./${redname} ./${counter+1}_Red.idat &&
       #end for
       #for $counter, $input in enumerate($files_grn):
-        #set $grnname = $input.element_identfier
+        #set $grnname = str( getattr( $input, 'element_identifier', 'sample' ) ).replace( "/", '-' ).replace( "\t", "-" )
         #silent $grnnames.append( $grnname )
         ln -s $input ./${grnname} &&
         ln -s ./${grnname} ./${counter+1}_Grn.idat &&
