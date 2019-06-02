@@ -29,7 +29,7 @@
         files['${counter+1}'] <- '${counter+1}'
         #end for
         print("message")
-        print(Sys.readlink(files[1]))
+        print('1')
         out <- read.metharray(files)
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
