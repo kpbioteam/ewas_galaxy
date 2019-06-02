@@ -27,8 +27,9 @@
         files<-list()
         #for $counter, $input in enumerate($files_red):
         files['${counter+1}'] <- '${counter+1}'
-        print(Sys.readlink('${counter+1}'))
         #end for
+        print("message")
+        print(Sys.readlink(files))
         out <- read.metharray(files)
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
