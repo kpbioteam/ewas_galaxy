@@ -26,7 +26,7 @@
         require("minfi", quietly = TRUE)
         files<-list()
         #for $counter, $input in enumerate($files_red):
-        files['${counter+1}'] <- '${counter+1}'
+        files['${counter+1}'] <- str( getattr( $input, 'element_identifier', 'sample' ) ).replace( "/", '-' ).replace( "\t", "-" )
         #end for
         out <- read.metharray(files)
         save(out, file = '$RGChannelSet')
