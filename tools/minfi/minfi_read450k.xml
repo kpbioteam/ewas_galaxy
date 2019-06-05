@@ -24,8 +24,7 @@
       <configfiles>
       <configfile name="read_idat_script"><![CDATA[
         require("minfi", quietly = TRUE)
-        files<-get(load('$grnnames'))
-        out <- read.metharray(files)
+        out <- read.metharray(list.files(pattern="_Red.idat"))
         save(out, file = '$RGChannelSet')
         ]]> </configfile>
         </configfiles>
