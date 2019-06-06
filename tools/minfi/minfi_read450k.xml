@@ -4,17 +4,12 @@
         <requirement type="package" version="1.24.0">bioconductor-minfi</requirement>
     </requirements>
     <command detect_errors="exit_code"><![CDATA[
-       #set rednames=[]
-       #set grnnames=[]
-
       #for $counter, $input in enumerate($files_red):
         #set $redname = str( getattr( $input, 'element_identifier', 'sample' ) ).replace( "/", '-' ).replace( "\t", "-" )
-        #silent $rednames.append( $redname )
         ln -s $input ./${redname} &&
       #end for
       #for $counter, $input in enumerate($files_grn):
         #set $grnname = str( getattr( $input, 'element_identifier', 'sample' ) ).replace( "/", '-' ).replace( "\t", "-" )
-        #silent $grnnames.append( $grnname )
         ln -s $input ./${grnname} &&
       #end for
       Rscript '$read_idat_script'
