@@ -32,8 +32,8 @@ save(GRSet,file =  '$grsetwithoutsnp')
     </outputs>
     <tests>
         <test>
-            <param name="grset" value="Data_Mapped_To_The_Genome.rdata"/>
-            <output name="grsetwithoutsnp" file="Data_Mapped_To_The_Genome_without_SNPs.rdata"/>
+            <param name="grset" value="GRSet.rdata"/>
+            <output name="grsetwithoutsnp" file="GRSet_without_SNPs.rdata"/>
         </test>
     </tests>
     <help><![CDATA[
