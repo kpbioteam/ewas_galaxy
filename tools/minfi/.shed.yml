@@ -8,7 +8,7 @@ long_description: EWAS Tools Suite includes raw intensity data loading .idat pre
   tools. Finally, the dataset generated through all of these steps can be used to
   hunt find differentially-methylated positions DMP and regions DMR with respect to
   a phenotype co-variate.
-name: ewas_suite
+name: ewastools
 owner: kpbioteam
 remote_repository_url: https://github.com/kpbioteam/ewas_galaxy
 exclude:
