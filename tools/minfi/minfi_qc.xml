@@ -42,7 +42,19 @@ dev.off()
         </test>
     </tests>
     <help><![CDATA[
-Quality Control (QC) outputs plot of the log median intensity in both the methylated (M) and unmethylated (U) channels. When plotting these two medians against each other the good samples cluster together, while failed samples tend to separate and have lower median intensities.
+**What it does**
+
+Minfi QC estimate sample-specific quality control (QC) for methylation data.
+
+**Input information**
+
+Input data is MethylSet class R object holding preprocessed data for Illumina methylation microarrays, mapped to a genomic location.
+
+**Output information**
+
+Ther is two files returning from the quality control, report and plot representing the log median intensity in both the methylated (M) and unmethylated (U) channels.
+When plotting these two medians against each other the good samples cluster together, while failed samples tend to separate and have lower median intensities.
+
     ]]></help>
     <expand macro="citations" />
 </tool>
