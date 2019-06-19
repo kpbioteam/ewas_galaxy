@@ -36,6 +36,7 @@ save(MSet,file = '$MethylSet')
         </test>
     </tests>
     <help><![CDATA[
+
 **What it does**
 
 Minfi Mset transform class representing raw (unprocessed) data from a two color micro array - RGChannelSet 
