@@ -34,7 +34,19 @@ save(RSet,file = '$rset')
         </test>
     </tests>
     <help><![CDATA[
-        RSet class holds preprocessed data for Illumina methylation microarrays. It contains respectively the Beta value matrix, M value matrix and the Copy Number matrix.
+**What it does**
+
+Minfi Rset convert methylation data from methylation and unmethylation channels, to ratios (Beta and M-values).
+
+**Input information**
+
+Input data is MethylSet class R object holding preprocessed data for Illumina methylation microarrays, mapped to a genomic location.
+
+**Output information**
+
+Minfi Rset as a result return RatioSet class R object holding preprocessed data for Illumina methylation microarrays. 
+It contains respectively the Beta value matrix, M value matrix and the Copy Number matrix.
+        
     ]]></help>
     <expand macro="citations" />
 </tool>
