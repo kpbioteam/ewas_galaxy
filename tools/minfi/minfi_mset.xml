@@ -36,7 +36,19 @@ save(MSet,file = '$MethylSet')
         </test>
     </tests>
     <help><![CDATA[
-        This tool is transforming a class representing raw (unprocessed) data from a two color micro array - RGChannelSet into a class holding preprocessed data for Illumina methylation microarrays, mapped to genomic location - MethylSet. 
+**What it does**
+
+Minfi Mset transform class representing raw (unprocessed) data from a two color micro array - RGChannelSet 
+into a class holding preprocessed data for Illumina methylation microarrays, mapped to genomic location - MethylSet. 
+
+**Input information**
+
+Input data is RGChannelSet class R object holding raw (unprocessed) data from an Illumina methylation array.
+
+**Output information**
+
+Output data is MethylSet class R object holding preprocessed data for Illumina methylation microarrays, mapped to a genomic location.
+        
     ]]></help>
     <expand macro="citations" />
 </tool>
