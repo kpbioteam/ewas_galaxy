@@ -35,7 +35,20 @@ save(GRSet,file = '$grset')
         </test>
     </tests>
     <help><![CDATA[
-        This tool uses the internal control probes present on the array to infer between-array technical variation. It is particularly useful for studies comparing conditions with known large-scale differences, such as cancer/normal studies, or between-tissue studies. It has been shown that for such studies, functional normalization outperforms other existing approaches (Jean-Philippe Fortin et al. 2014).
-    ]]></help>
+       
+**What it does**
+
+Minfi Preprocess Funnorm applays functional (between-array) normalization method for the Illumina Infinium HumanMethylation450 platform. 
+It removes unwanted variation by regressing out variability explained by the control probes present on the array.
+
+**Input information**
+
+Input data is RGChannelSet class R object holding raw (unprocessed) data from an Illumina methylation array.
+
+**Output information**
+
+Minfi Preprocess Funnorm as a result return GenomicRatioSet class R object holding preprocessed data for Illumina methylation microarrays, mapped to a genomic location.
+  
+  ]]></help>
     <expand macro="citations" />
 </tool>
