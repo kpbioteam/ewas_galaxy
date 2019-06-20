@@ -37,8 +37,19 @@ write.table(snps, '$table')
         </test>
     </tests>
     <help><![CDATA[
-        This tool is a version of the getSnpInfo adapted to retrieve the chromosome and the position of each SNP on a given Affymetrix SNP Array.
-    ]]></help>
-    <expand macro="citations" />
-</tool>
 
+**What it does**
+
+Minfi Get SNPs retrieve the chromosome and the position of each SNP on a given Affymetrix SNP Array.
+
+**Input information**
+
+Input data is GenomicRatioSet class R object holding preprocessed data for Illumina methylation microarrays, mapped to a genomic location.
+
+**Output information**
+
+Minfi Get SNPs as a result return a table with chromosome and the position of each SNP on a given Affymetrix SNP Array.
+
+  ]]></help>
+    <expand macro="citations" />
+</tool>  
