@@ -34,7 +34,26 @@ write.table(m, '$matrix')
         </test>
     </tests>
     <help><![CDATA[
-        This tool output M value the logit representation of methylation level ratio based on intensities between methylated and unmethylated alleles in each probed CpG site.
+
+**What it does**
+
+Minfi Get M logit representation of methylation level ratio based on intensities between methylated and unmethylated alleles in each probed CpG site.
+
+**Input information**
+
+Input data is MethylSet class R object holding preprocessed data for Illumina methylation microarrays, mapped to a genomic location.
+
+**Output information**
+
+Minfi Get M output table of M value representing logit representation of methylation levels. 
+============ ============================ ============================ 
+             GSM1588704_8795207135_R01C02 GSM1588705_8795207119_R05C02
+------------ ---------------------------- ---------------------------- 
+"cg00050873"   3.32866672067078               3.11451813808205 
+"cg00212031"   -1.9168060644736              -0.67235651274313 
+"cg00213748"   0.758742536561458              0.369485347464436 
+"cg00214611"   -1.71620703399941             -2.6762776674671 
+=======================================================================
     ]]></help>
     <expand macro="citations" />
 </tool>
