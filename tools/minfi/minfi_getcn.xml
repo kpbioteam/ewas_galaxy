@@ -34,7 +34,26 @@ write.table(CN, '$matrix')
         </test>
     </tests>
     <help><![CDATA[
-        This tool output copy number of the values defined as the sum of the methylation and unmethylation channel for each probed CpG site.
+        
+**What it does**
+
+Minfi Get CN retrive the detailed copy number (CN) variation associated with methylation activity for each probed CpG site.
+
+**Input information**
+
+Input data is MethylSet class R object holding preprocessed data for Illumina methylation microarrays, mapped to a genomic location.
+
+**Output information**
+
+Minfi Get CN output copy number of the values defined as the sum of the methylation and unmethylation channel for each probed CpG site.
+============ ============================ ============================ 
+             GSM1588704_8795207135_R01C02 GSM1588705_8795207119_R05C02
+------------ ---------------------------- ---------------------------- 
+"cg00050873"    13.8823564686542              14.1270270430046
+"cg00212031"    10.4356702609366              10.0579917227592 
+"cg00213748"    9.467605550083                8.7279204545632
+"cg00214611"    10.3987436919382              10.3454052467178
+=======================================================================
     ]]></help>
     <expand macro="citations" />
 </tool>
