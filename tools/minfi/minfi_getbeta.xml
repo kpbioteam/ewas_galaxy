@@ -35,7 +35,28 @@ write.table(beta, file = '$matrix', quote = FALSE, sep = "\t")
         </test>
     </tests>
     <help><![CDATA[
-        This tools outputs an interval file of methylation indices (beta values), which are continuous values between 0 and 1 representing the ratio/fraction of the intensity of the methylated-probe signal to the total signal intensity for each probed CpG site.
+
+**What it does**
+
+Minfi Get Beta retrive the Beta values (β) to estimate the methylation level using the ratio of intensities between methylated and unmethylated alleles. 
+β are between 0 and 1 with 0 being unmethylated and 1 fully methylated.
+
+**Input information**
+
+Input data is MethylSet class R object holding preprocessed data for Illumina methylation microarrays, mapped to a genomic location.
+
+**Output information**
+
+Minfi Get Beta outputs an interval file of methylation indices (beta values), which are continuous values between 0 and 1 representing the ratio/fraction of the intensity of the methylated-probe signal to the total signal intensity for each probed CpG site.
+============ ============================ ============================ 
+             GSM1588704_8795207135_R01C02 GSM1588705_8795207119_R05C02
+------------ ---------------------------- ---------------------------- 
+"cg00050873"    13.8823564686542              14.1270270430046
+"cg00212031"    10.4356702609366              10.0579917227592 
+"cg00213748"    9.467605550083                8.7279204545632
+"cg00214611"    10.3987436919382              10.3454052467178
+=======================================================================
+        
     ]]></help>
     <expand macro="citations" />
 </tool>
