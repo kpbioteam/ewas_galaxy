@@ -86,16 +86,38 @@ write.table(dmrGR, file= '$dmr', quote = FALSE,col.names = TRUE, row.names = FAL
         </test>
     </tests>
     <help><![CDATA[
-Genomic Ratio Set should contain 450k arrays reads for each sample listed in Phenotype Table: sampleID phenotype paired e.g. GSM1588708 sensitive 1 
 
-This tool is a version of the bump hunting algorithm (Andrew E Jaffe et al. 2012) adapted to the 450k array finding find differentially methylated regions DMR.
+**What it does**
+
+Minfi DMR is a version of the bump hunting algorithm (Andrew E Jaffe et al. 2012) adapted to the 450k array finding to find differentially methylated regions DMR.
+
+**Input information**
+
+Input data is GenomicRatioSet and Phenotype Table.
+GenomicRatioSet class is an R object holding preprocessed data for Illumina methylation microarrays, mapped to a genomic location.
+It should contain 450k arrays reads for each sample listed in Phenotype Table: sample accession (ID) and phenotype paired e.g. 
+============ ============ ============
+  Accession	 Sensitivity   Treatment
+------------ ------------ ------------ 
+GSM1588704	 sensitive	   MAPKi
+GSM1588705	 sensitive	   MAPKi
+GSM1588706	 resistant	   BRAFi
+GSM1588707	 resistant	   BRAFi
+============ ============ ============
+
+**Output information**
 
 The output is an interval file with the following columns:
 
-    - chr
-    - start
-    - end
-
+============ ============ ============
+  chr	       start       end
+------------ ------------ ------------ 
+ chr1	       29407	  29407
+ chr1	       69591	  69591
+ chr1	       91550	  91550
+ chr1	       542758	  542758
+ chr1	       546984	  546984
+============ ============ ============
     ]]></help>
     <expand macro="citations" />
 </tool>
