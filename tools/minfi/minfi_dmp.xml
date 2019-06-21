@@ -72,16 +72,52 @@ write.table(data, file= '$dmp', quote = FALSE,col.names = TRUE, row.names = FALS
         </test>
     </tests>
     <help><![CDATA[
-This tool creates differentially methylated positions (DMPs) with respect to a phenotype covariate. The phenotype may be categorical (e.g. cancer vs. normal) or continuous (e.g. blood pressure). 
+
+**What it does**
+
+Minfi DMP retrieve differentially methylated positions (DMPs) with respect to a phenotype covariate. 
+The phenotype may be categorical (e.g. cancer vs. normal) or continuous (e.g. blood pressure). 
+
+**Input information**
+
+Input data is GenomicRatioSet, Phenotype Table with coresponding Genome Table
+
+GenomicRatioSet class is an R object holding preprocessed data for Illumina methylation microarrays, mapped to a genomic location.
+It should contain 450k arrays reads for each sample listed in Phenotype Table: sample accession (ID) and phenotype paired e.g. 
+============ ============ ============
+  Accession	 Sensitivity   Treatment
+------------ ------------ ------------ 
+GSM1588704	 sensitive	   MAPKi
+GSM1588705	 sensitive	   MAPKi
+GSM1588706	 resistant	   BRAFi
+GSM1588707	 resistant	   BRAFi
+============ ============ ============
+
+UCSC genome data HAIB Methyl450 can be obtained using UCSC Main table browser tool with following settings:
+
+"clade": Mammal
+"genome": Human
+"assembly": Feb. 2009 (GRCh37/hg19)
+"group": Regulation
+"track": HAIB Methyl450
+"table": GM12878 (wgEncodeHaibMethyl450Gm12878SitesRep1)
+"region": genome
+"output format": GTF - gene transfer (limited)
+"Send output to": Galaxy (only)
+
+
+**Output information**
 
 The output is an interval file with the following columns:
-
-    - chr
-    - start
-    - end
-    - names
-    - pvalue
-    - qval 
+============ ============ ============ ============ ======================== ========================
+  chr	       start       end          names	      pval	                   qval
+------------ ------------ ------------ ------------ ------------------------  ------------------------  
+chr16	     53468112	  53468112	   cg00000029	0.273485175006601	      0.239609190206712
+chr3	     37459206	  37459206	   cg00000108	0.623243998636913	      0.39258989981719
+chr3	     171916037	  171916037	   cg00000109	0.232539543925332	      0.216244969633372
+chr1	     91194675	  91194675	   cg00000165	0.248020671814953	      0.225232373436069
+chr8	     42263295	  42263295	   cg00000236	0.230215862279736	      0.214851543324713
+============ ============ ============ ============ ======================== ========================
 
  ]]></help>
     <expand macro="citations" />
