@@ -40,7 +40,7 @@ save(GRSet,file =  '$grsetwithoutsnp')
 
 **What it does**
 
-Minfi Drop SNPs remove the probes containing either a SNP at the CpG interrogation or at the single nucleotide extension (recommend).
+Minfi Drop SNPs removes probes containing either a SNP at the CpG interrogation or at the single nucleotide extension (recommend).
 
 **Input information**
 
