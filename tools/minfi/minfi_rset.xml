@@ -40,8 +40,7 @@ Minfi Rset convert methylation data from methylation and unmethylation channels,
 
 **Input information**
 
-Input data is MethylSet class R object holding preprocessed data for Illumina methylation microarrays, mapped to a genomic location.
-i.e. output from Minfi Mset Tool
+Input data is MethylSet class R object (i.e. output from Minfi Mset Tool) holding preprocessed data for Illumina methylation microarrays, mapped to a genomic location.
 
 **Output information**
 
