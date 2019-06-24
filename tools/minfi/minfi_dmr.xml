@@ -89,13 +89,13 @@ write.table(dmrGR, file= '$dmr', quote = FALSE,col.names = TRUE, row.names = FAL
 
 **What it does**
 
-Minfi DMR is a version of the bump hunting algorithm (Andrew E Jaffe et al. 2012) adapted to the 450k array finding to find differentially methylated regions DMR.
+Minfi DMR  tool uses a version of the bumphunting algorithm (Andrew E Jaffe et al. 2012) adapted to the 450k array with a goal to find differentially methylated regions DMR.
 
 **Input information**
 
 Input data is GenomicRatioSet and Phenotype Table.
 GenomicRatioSet class is an R object holding preprocessed data for Illumina methylation microarrays, mapped to a genomic location.
-It should contain 450k arrays reads for each sample listed in Phenotype Table: sample accession (ID) and phenotype paired e.g. 
+It should contain 450k arrays files for each sample listed in Phenotype Table: sample accession (ID) and phenotype paired e.g. 
 ============ ============ ============
   Accession	 Sensitivity   Treatment
 ------------ ------------ ------------ 
