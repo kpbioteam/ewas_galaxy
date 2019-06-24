@@ -37,7 +37,7 @@ write.table(CN, '$matrix')
         
 **What it does**
 
-Minfi Get CN retrive the detailed copy number (CN) variation associated with methylation activity for each probed CpG site.
+Minfi Get CN  tool retrives the detailed copy number (CN) variation associated with methylation activity for each probed CpG site.
 
 **Input information**
 
