@@ -38,7 +38,7 @@ write.table(beta, file = '$matrix', quote = FALSE, sep = "\t")
 
 **What it does**
 
-Minfi Get Beta retrive the Beta values (β) to estimate the methylation level using the ratio of intensities between methylated and unmethylated alleles. 
+Minfi Get Beta retrives Beta values (β) to estimate the methylation level using the ratio of intensities between methylated and unmethylated alleles. 
 β are between 0 and 1 with 0 being unmethylated and 1 fully methylated.
 
 **Input information**
