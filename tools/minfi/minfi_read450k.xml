@@ -48,7 +48,7 @@ intensity data. e.g. GSM1588707_8795207119_R06C02_Red.idat, GSM1588707_879520711
 
 **Output information**
 
-Output is an object of R class RGChannelSet representing raw (unprocessed) data from Illumina Methylation Arrays.
+Output is an object of R class RGChannelSet representing raw (unprocessed) data from Illumina Methylation Arrays i.e. used as an input in Minfi Mset Tool.
 
 ]]></help>
     <citations>
