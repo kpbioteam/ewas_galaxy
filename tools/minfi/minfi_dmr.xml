@@ -118,6 +118,9 @@ The output is an interval file with the following columns:
  chr1	       542758	  542758
  chr1	       546984	  546984
 ============ ============ ============
-    ]]></help>
+
+Genomic coordinates of diffrentialy methylated regions can be annotated using **ChIPpeakAnno annoPeaks** tool.
+   
+ ]]></help>
     <expand macro="citations" />
 </tool>
