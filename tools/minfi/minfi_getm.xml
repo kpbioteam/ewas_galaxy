@@ -37,7 +37,7 @@ write.table(m, '$matrix')
 
 **What it does**
 
-Minfi Get M logit representation of methylation level ratio based on intensities between methylated and unmethylated alleles in each probed CpG site.
+Minfi Get M  outputs logit representation of methylation level ratio based on intensities between methylated and unmethylated alleles in each probed CpG site.
 
 **Input information**
 
