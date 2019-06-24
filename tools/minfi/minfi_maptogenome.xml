@@ -40,12 +40,12 @@ save(GRSet,file = '$grset')
    
  **What it does**
 
-Minfi Map to Genome map Ilumina methylation array data to the genome using 450k annotation package. 
+Minfi Map to Genome maps Ilumina methylation array data to the genome using 450k annotation package. 
 Depending on the genome, not all methylation loci may have a genomic position. 
 
 **Input information**
 
-Input data is RatioSet class R object holding preprocessed data for Illumina methylation microarrays. 
+Input data is a RatioSet class R object holding preprocessed data for Illumina methylation microarrays. 
 It contains respectively the Beta value matrix, M value matrix and the Copy Number matrix.
         
 **Output information**
