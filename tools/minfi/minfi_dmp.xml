@@ -75,15 +75,15 @@ write.table(data, file= '$dmp', quote = FALSE,col.names = TRUE, row.names = FALS
 
 **What it does**
 
-Minfi DMP retrieve differentially methylated positions (DMPs) with respect to a phenotype covariate. 
-The phenotype may be categorical (e.g. cancer vs. normal) or continuous (e.g. blood pressure). 
+Minfi DMP retrieves differentially methylated positions (DMPs) with respect to a phenotype covariate. 
+The phenotype variable might be categorical (e.g. cancer vs. normal) or continuous (e.g. blood pressure). 
 
 **Input information**
 
 Input data is GenomicRatioSet, Phenotype Table with coresponding Genome Table
 
 GenomicRatioSet class is an R object holding preprocessed data for Illumina methylation microarrays, mapped to a genomic location.
-It should contain 450k arrays reads for each sample listed in Phenotype Table: sample accession (ID) and phenotype paired e.g. 
+It should contain 450k arrays files for each sample listed in Phenotype Table: sample accession (ID) and phenotype paired e.g. 
 ============ ============ ============
   Accession	 Sensitivity   Treatment
 ------------ ------------ ------------ 
@@ -93,7 +93,7 @@ GSM1588706	 resistant	   BRAFi
 GSM1588707	 resistant	   BRAFi
 ============ ============ ============
 
-UCSC genome data HAIB Methyl450 can be obtained using UCSC Main table browser tool with following settings:
+UCSC genome data HAIB Methyl450 could be obtained using UCSC Main table browser tool with following settings:
 
 "clade": Mammal
 "genome": Human
