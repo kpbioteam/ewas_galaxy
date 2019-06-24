@@ -50,7 +50,7 @@ It contains respectively the Beta value matrix, M value matrix and the Copy Numb
         
 **Output information**
 
-The output is an a GenomicRatioSet R object class holding preprocessed data for Illumina methylation microarrays, mapped to a genomic location.
+The output is an a GenomicRatioSet R object class holding preprocessed data for Illumina methylation microarrays, mapped to a genomic coordinates.
 
     ]]></help>
     <expand macro="citations" />
