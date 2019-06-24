@@ -39,7 +39,7 @@ save(MSet,file = '$MethylSet')
 
 **What it does**
 
-Minfi Mset transforms class representing raw (unprocessed) data from a two color micro array - RGChannelSet 
+Minfi Mset transforms class representing raw (unprocessed) data from a two color microarray - RGChannelSet 
 into a class holding preprocessed data for Illumina methylation microarrays, mapped to genomic location - MethylSet. 
 
 **Input information**
