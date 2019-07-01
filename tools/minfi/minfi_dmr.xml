@@ -89,7 +89,7 @@ write.table(dmrGR, file= '$dmr', quote = FALSE,col.names = TRUE, row.names = FAL
 
 **What it does**
 
-Minfi DMR  tool uses a version of the bumphunting algorithm (Andrew E Jaffe et al. 2012) adapted to the 450k array with a goal to find differentially methylated regions DMR.
+Minfi DMR  tool uses a version of the bumphunting algorithm (Andrew E Jaffe et al. 2012) adapted to the 450k array with the goal to find differentially methylated regions DMR.
 
 **Input information**
 
