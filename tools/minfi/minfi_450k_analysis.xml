@@ -48,6 +48,7 @@
 
 	GRSet <- dropLociWithSnps(GRSet, snps=c("SBE","CpG"), maf=0) #optional - drop the probes that contain either a SNP at the CpG interrogation or at the single nucleotide extensions
 
+	###dmr###
 	pheno <- read.table('$phenotype_table',skip = 1) 
 	group <- pheno\$V2
         pair <- factor(pheno\$V3)
@@ -78,6 +79,36 @@
 
 	write.table(dmrGR, file= '$dmr', quote = FALSE,col.names = TRUE, row.names = FALSE, sep = "\t")
 
+	###dmp###
+
+	genomeranges <- as.data.frame(ranges(GRSet))
+
+        beta <- getBeta(GRSet)
+
+        type <- '$phenotype'
+
+        qCutoff <- as.numeric('$q_cutoff')
+
+        shrinkVar <- '$variance_shrinkage'
+
+        tab <- read.table('$ucsc_genome')
+
+        tab <- tab[,-(11:14),drop=FALSE]
+
+        tab <- tab[,c(1,4,5,10)]
+
+        colnames(tab) <- c('chr','start','end','names')
+
+        dmp <- dmpFinder(beta, pheno[,"V2"], type = type, qCutoff = qCutoff, shrinkVar = shrinkVar)
+
+        dmp[,"names"] <- rownames(dmp)
+
+        data <- merge(dmp, tab, by="names",sort = TRUE)
+
+        data <- data[,c(6,7,8,1,4,5)]
+
+        write.table(data, file= '$dmp', quote = FALSE,col.names = TRUE, row.names = FALSE, sep = "\t") #find differentially methylated positions
+
         ]]> </configfile>
         </configfiles>
         <inputs>
@@ -94,7 +125,15 @@
             help="An integer denoting the number of resamples to use when computing null distributions. This defaults to 0. If permutations is supplied that defines the number of permutations/bootstraps and B is ignored."/>
         <param name="null_method" type="select" label="null Method" help="Method used to generate null candidate regions.">
             <option value="permutation" selected="True">permutation</option>
-            <option value="bootstrap">bootstrap</option>
+	    <option value="bootstrap">bootstrap</option>
+	</param>
+	<param name="phenotype" type="select" label="Phenotype Type">
+            <option value="categorical">categorical</option>
+	    <option value="continuous">continuous</option>
+        <param name="q_cutoff" type="float" value="1" label="qCutoff Size" help="DMPs with an FDR q-value greater than this will not be returned."/>
+        <param name="variance_shrinkage" type="boolean" truevalue="TRUE" falsevalue="FALSE" label="Variance Shrinkage"
+            help="Enable variance shrinkage is recommended when sample sizes are small"/>
+        <param type="data" name="ucsc_genome" format="gtf" label="Genome Table" help="UCSC genome data Methyl450"/>
          </param>
          </inputs>
 	    <outputs>
@@ -102,6 +141,7 @@
 	    <data name="qcpng" format="png" label="Quality Control Plot"/>
 	    <data name="table" format="txt" label="SNPInfo Table"/>
 	    <data name="dmr" format="interval" label="Differentially Methylated Regions"/>   
+	    <data name="dmp" format="interval" label="Differentially Methylated Positions"/>
               </outputs>
              <tests>
         <test>
@@ -111,11 +151,16 @@
             <param name="maxgap_size" value="250"/>
             <param name="cutoff_size" value="0.1"/>
             <param name="number_of_resamples" value="0"/>
-            <param name="null_method" value="permutation"/>
+	    <param name="null_method" value="permutation"/>
+	    <param name="phenotype" value="categorical"/>
+            <param name="q_cutoff" value="1"/>
+            <param name="variance_shrinkage" value="FALSE"/>
+            <param name="ucsc_genome" value="ucsc.gtf"/>
 	    <output name="qctab" file="Quality_Control_Report.txt"/>
 	    <output name="qcpng" file="Quality_Control_Plot.png" compare="sim_size"/>
 	    <output name="table" file="SNPInfo_Table.txt"/>
 	    <output name="dmr" file="Differentially_Methylated_Regions.interval"/>
+	    <output name="dmp" file="Differentially_Methylated_Positions.interval"/>
         </test>
     </tests>
     <help><![CDATA[
