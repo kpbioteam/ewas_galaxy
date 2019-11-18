@@ -127,10 +127,9 @@
 	<inputs>
 		
 	<param name="optqc" type="boolean" truevalue="1" falsevalue="0" checked="true" label="(Optional) provide a quality control" help="Output a simple quality control matrix and plot" />
-        <param name="optpp" type="boolean" truevalue="1" falsevalue="0" checked="true" label="(Optional) implements the normalization algorithm" help="Apply functional or  stratified quantile normalization preprocessing" />
-		$optsnp
-		$optdrop
-
+	<param name="optpp" type="boolean" truevalue="1" falsevalue="0" checked="true" label="(Optional) implements the normalization algorithm" help="Apply functional or  stratified quantile normalization preprocessing" />
+	<param name="optsnp" type="boolean" truevalue="1" falsevalue="0" checked="true" label="(Optional) retrieve the chromosome and the position of each SNP" help="Output matrix of the chromosome and the position of each SNP on a given Affymetrix SNP Array" />
+	<param name="optdrop" type="boolean" truevalue="1" falsevalue="0" checked="true" label="(Optional) remove SNPs" help="Drop the probes that contain either a SNP at the CpG interrogation or at the single nucleotide extensions" />
         <param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
         <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" />
         <param type="data" name="phenotype_table" format="tabular" label="Phenotype Table"
