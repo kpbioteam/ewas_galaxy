@@ -127,8 +127,7 @@
 	<inputs>
 		
 	<param name="optqc" type="boolean" truevalue="1" falsevalue="0" checked="true" label="(Optional) provide a quality control" help="Output a simple quality control matrix and plot" />
-		$optqc
-		$optpp
+        <param name="optpp" type="boolean" truevalue="1" falsevalue="0" checked="true" label="(Optional) implements the normalization algorithm" help="Apply functional or  stratified quantile normalization preprocessing" />
 		$optsnp
 		$optdrop
 
