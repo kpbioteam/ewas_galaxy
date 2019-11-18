@@ -151,7 +151,6 @@
         <param name="q_cutoff" type="float" value="1" label="qCutoff Size" help="DMPs with an FDR q-value greater than this will not be returned."/>
         <param name="variance_shrinkage" type="boolean" truevalue="TRUE" falsevalue="FALSE" label="Variance Shrinkage" help="Enable variance shrinkage is recommended when sample sizes are small"/>
         <param type="data" name="ucsc_genome" format="gtf" label="Genome Table" help="UCSC genome data Methyl450"/>
-          </param>
          </inputs>
 	     <outputs>
              <data name="qctab" format="txt" label="Quality Control Report"/>
@@ -164,7 +163,11 @@
          <test>
             <param name="files_red" value="GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat" ftype="idat"/>
             <param name="files_grn" value="GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat" ftype="idat"/>
-            <param name="phenotype_table" value="phenotypeTable.txt"/>
+	    <param name="phenotype_table" value="phenotypeTable.txt"/>
+	    <param name="optqc" value="False"/>
+	    <param name="optpp" value="False"/>
+	    <param name="optsnp" value="False"/>
+	    <param name="optdrop" value="False"/>
             <param name="maxgap_size" value="250"/>
             <param name="cutoff_size" value="0.1"/>
             <param name="number_of_resamples" value="0"/>
