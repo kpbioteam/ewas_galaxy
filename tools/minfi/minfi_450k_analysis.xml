@@ -27,26 +27,39 @@
 	
 	MSet <- preprocessRaw(RGSet) #create objects contains CpGs signals
 	
-	qc <- getQC(MSet)
-	write.table(qc, '$qctab') #optional - provides a simple quality control matrix and plot
-	png('$qcpng')
-	plotQC(qc)
-	dev.off()
+        if ('$optqc' ) {
+        qc <- getQC(MSet)
+        write.table(qc, '$qctab') #optional - provides a simple quality control matrix and plot
+        png('$qcpng')
+        plotQC(qc)
+        dev.off()
+        } else {
+	}
 
 	RSet <- ratioConvert(MSet, what = "both", keepCN = TRUE) #store Beta values and/or M values
         
 	GRSet <- mapToGenome(RSet) #mapping Ilumina methylation array data to the genome
 
+	if ('$optpp' ) {
 	GRSet <- preprocessFunnorm(RGSet) #optional - implements the functional normalization algorithm
+	} else {
 	GRSet <- preprocessQuantile(RGSet, fixOutliers = TRUE,
-  removeBadSamples = TRUE, badSampleCutoff = 10.5,
-  quantileNormalize = TRUE, stratified = TRUE,
-  mergeManifest = FALSE, sex = NULL) #optional - implements stratified quantile normalization preprocessing
-      
-        snps <- getSnpInfo(GRSet) #optional - retrieve the chromosome and the position of each SNP
-	write.table(snps, '$table')
+        removeBadSamples = TRUE, badSampleCutoff = 10.5,
+        quantileNormalize = TRUE, stratified = TRUE,
+        mergeManifest = FALSE, sex = NULL) #optional - implements stratified quantile normalization preprocessing
+	} else {
+	}
 
+	if ('$optsnp') {
+	snps <- getSnpInfo(GRSet) #optional - retrieve the chromosome and the position of each SNP
+	write.table(snps, '$table')
+        } else {
+	}
+
+	if ('$optdrop') {
 	GRSet <- dropLociWithSnps(GRSet, snps=c("SBE","CpG"), maf=0) #optional - drop the probes that contain either a SNP at the CpG interrogation or at the single nucleotide extensions
+        } else {
+	}
 
 	###dmr###
 	pheno <- read.table('$phenotype_table',skip = 1) 
@@ -111,10 +124,14 @@
 
         ]]> </configfile>
         </configfiles>
-        <inputs>
+	<inputs>
+		$optqc
+		$optpp
+		$optsnp
+		$optdrop
+
         <param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
-        <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" />              <param type="data" name="grset" format="rdata" label="Data Mapped To The Genome"
-            help="This class (GenomicRatioSet) holds preprocessed data for Illumina methylation microarrays, mapped to a genomic location." />
+        <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" />
         <param type="data" name="phenotype_table" format="tabular" label="Phenotype Table"
             help="Phenotype Table must include the following information: sampleID, phenotype and paird or unpaired samples column"/>
         <param name="maxgap_size" type="integer" value="250" label="maxGap Size"
@@ -123,28 +140,28 @@
             help="A numeric value. Values of the estimate of the genomic profile above the cutoff or below the negative of the cutoff will be used as candidate regions. It is possible to give two separate values (upper and lower bounds). If one value is given, the lower bound is minus the value."/> 
         <param name="number_of_resamples" type="integer" value="0" label="Number of Resamples"
             help="An integer denoting the number of resamples to use when computing null distributions. This defaults to 0. If permutations is supplied that defines the number of permutations/bootstraps and B is ignored."/>
-        <param name="null_method" type="select" label="null Method" help="Method used to generate null candidate regions.">
+        <param name="null_method" type="select" label="null Method" help="Method used to generate null candidate region.">
             <option value="permutation" selected="True">permutation</option>
 	    <option value="bootstrap">bootstrap</option>
-	</param>
-	<param name="phenotype" type="select" label="Phenotype Type">
+	   </param>
+	   <param name="phenotype" type="select" label="Phenotype Type">
             <option value="categorical">categorical</option>
 	    <option value="continuous">continuous</option>
+	   </param>
         <param name="q_cutoff" type="float" value="1" label="qCutoff Size" help="DMPs with an FDR q-value greater than this will not be returned."/>
-        <param name="variance_shrinkage" type="boolean" truevalue="TRUE" falsevalue="FALSE" label="Variance Shrinkage"
-            help="Enable variance shrinkage is recommended when sample sizes are small"/>
+        <param name="variance_shrinkage" type="boolean" truevalue="TRUE" falsevalue="FALSE" label="Variance Shrinkage" help="Enable variance shrinkage is recommended when sample sizes are small"/>
         <param type="data" name="ucsc_genome" format="gtf" label="Genome Table" help="UCSC genome data Methyl450"/>
-         </param>
+          </param>
          </inputs>
-	    <outputs>
-            <data name="qctab" format="txt" label="Quality Control Report"/>
-	    <data name="qcpng" format="png" label="Quality Control Plot"/>
-	    <data name="table" format="txt" label="SNPInfo Table"/>
-	    <data name="dmr" format="interval" label="Differentially Methylated Regions"/>   
-	    <data name="dmp" format="interval" label="Differentially Methylated Positions"/>
-              </outputs>
+	     <outputs>
+             <data name="qctab" format="txt" label="Quality Control Report"/>
+	     <data name="qcpng" format="png" label="Quality Control Plot"/>
+	     <data name="table" format="txt" label="SNPInfo Table"/>
+	     <data name="dmr" format="interval" label="Differentially Methylated Regions"/>   
+	     <data name="dmp" format="interval" label="Differentially Methylated Positions"/>
+               </outputs>
              <tests>
-        <test>
+         <test>
             <param name="files_red" value="GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat" ftype="idat"/>
             <param name="files_grn" value="GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat" ftype="idat"/>
             <param name="phenotype_table" value="phenotypeTable.txt"/>
