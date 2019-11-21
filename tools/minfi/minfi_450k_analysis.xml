@@ -27,33 +27,26 @@
 	
 	MSet <- preprocessRaw(RGSet) #create objects contains CpGs signals
 	
-        if ('$optqc') {
         qc <- getQC(MSet)
         write.table(qc, '$qctab') #optional - provides a simple quality control matrix and plot
         png('$qcpng')
         plotQC(qc)
         dev.off()
-        } 
-
+         
 	RSet <- ratioConvert(MSet, what = "both", keepCN = TRUE) #store Beta values and/or M values
-        
-	GRSet <- mapToGenome(RSet) #mapping Ilumina methylation array data to the genome
 
-	if ('$optpp') {
+	if ('$optpp' == "na" ) {
+	GRSet <- mapToGenome(RSet) #mapping Ilumina methylation array data to the genome
+	} else if ('$optpp' == "ppfun"  ) {
 	GRSet <- preprocessFunnorm(RGSet) #optional - implements the functional normalization algorithm
-	} else {
+	} else  if ('$optpp' == "ppq" ) {
 	GRSet <- preprocessQuantile(RGSet, fixOutliers = TRUE,
         removeBadSamples = TRUE, badSampleCutoff = 10.5,
         quantileNormalize = TRUE, stratified = TRUE,
         mergeManifest = FALSE, sex = NULL) #optional - implements stratified quantile normalization preprocessing
-	} 
-
-	if ('$optsnp') {
-	snps <- getSnpInfo(GRSet) #optional - retrieve the chromosome and the position of each SNP
-	write.table(snps, '$table')
-        } 
-
-	if ('$optdrop') {
+	}  else if ('$optpp' == "ppsnp" ) {
+	#snps <- getSnpInfo(GRSet) #optional - retrieve the chromosome and the position of each SNP
+	#write.table(snps, '$table')
 	GRSet <- dropLociWithSnps(GRSet, snps=c("SBE","CpG"), maf=0) #optional - drop the probes that contain either a SNP at the CpG interrogation or at the single nucleotide extensions
         } 
 
@@ -121,12 +114,13 @@
         ]]> </configfile>
         </configfiles>
 	<inputs>
-		
-	<param name="optqc" type="boolean" truevalue="1" falsevalue="0" checked="true" label="(Optional) provide a quality control" help="Output a simple quality control matrix and plot" />
-	<param name="optpp" type="boolean" truevalue="1" falsevalue="0" checked="true" label="(Optional) implements the normalization algorithm" help="Apply functional or  stratified quantile normalization preprocessing" />
-	<param name="optsnp" type="boolean" truevalue="1" falsevalue="0" checked="true" label="(Optional) retrieve the chromosome and the position of each SNP" help="Output matrix of the chromosome and the position of each SNP on a given Affymetrix SNP Array" />
-	<param name="optdrop" type="boolean" truevalue="1" falsevalue="0" checked="true" label="(Optional) remove SNPs" help="Drop the probes that contain either a SNP at the CpG interrogation or at the single nucleotide extensions" />
-        <param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
+		<param name="optpp" type="select" label="Optional) Preprocessing Method" help="Mapping Ilumina methylation array data to the genome with or without additional preprocess.">
+            <option value="na">No Selection (use default)</option>
+	    <option value="ppfun">Preprocess Funnorm</option>
+	    <option value="ppq">Preprocess Quantile</option>
+            <option value="ppsnp">Remove SNPs</option>
+        </param>		
+	<param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
         <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" />
         <param type="data" name="phenotype_table" format="tabular" label="Phenotype Table"
             help="Phenotype Table must include the following information: sampleID, phenotype and paird or unpaired samples column"/>
@@ -160,10 +154,7 @@
             <param name="files_red" value="GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat" ftype="idat"/>
             <param name="files_grn" value="GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat" ftype="idat"/>
 	    <param name="phenotype_table" value="phenotypeTable.txt"/>
-	    <param name="optqc" value="True"/>
-	    <param name="optpp" value="False"/>
-	    <param name="optsnp" value="False"/>
-	    <param name="optdrop" value="False"/>
+	    <param name="optpp" value="ppsnp"/>
             <param name="maxgap_size" value="250"/>
             <param name="cutoff_size" value="0.1"/>
             <param name="number_of_resamples" value="0"/>
