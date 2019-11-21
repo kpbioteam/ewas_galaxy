@@ -27,39 +27,35 @@
 	
 	MSet <- preprocessRaw(RGSet) #create objects contains CpGs signals
 	
-        if ('$optqc' ) {
+        if ($optqc) {
         qc <- getQC(MSet)
         write.table(qc, '$qctab') #optional - provides a simple quality control matrix and plot
         png('$qcpng')
         plotQC(qc)
         dev.off()
-        } else {
-	}
+        } 
 
 	RSet <- ratioConvert(MSet, what = "both", keepCN = TRUE) #store Beta values and/or M values
         
 	GRSet <- mapToGenome(RSet) #mapping Ilumina methylation array data to the genome
 
-	if ('$optpp' ) {
+	if ($optpp) {
 	GRSet <- preprocessFunnorm(RGSet) #optional - implements the functional normalization algorithm
 	} else {
 	GRSet <- preprocessQuantile(RGSet, fixOutliers = TRUE,
         removeBadSamples = TRUE, badSampleCutoff = 10.5,
         quantileNormalize = TRUE, stratified = TRUE,
         mergeManifest = FALSE, sex = NULL) #optional - implements stratified quantile normalization preprocessing
-	} else {
-	}
+	} 
 
-	if ('$optsnp') {
+	if ($optsnp) {
 	snps <- getSnpInfo(GRSet) #optional - retrieve the chromosome and the position of each SNP
 	write.table(snps, '$table')
-        } else {
-	}
+        } 
 
-	if ('$optdrop') {
+	if ($optdrop) {
 	GRSet <- dropLociWithSnps(GRSet, snps=c("SBE","CpG"), maf=0) #optional - drop the probes that contain either a SNP at the CpG interrogation or at the single nucleotide extensions
-        } else {
-	}
+        } 
 
 	###dmr###
 	pheno <- read.table('$phenotype_table',skip = 1) 
