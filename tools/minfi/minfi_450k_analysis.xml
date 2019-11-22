@@ -34,6 +34,7 @@
         dev.off()
          
 	RSet <- ratioConvert(MSet, what = "both", keepCN = TRUE) #store Beta values and/or M values
+        GRSet <- mapToGenome(RSet)
 
 	if ('$optpp' == "na" ) {
 	GRSet <- mapToGenome(RSet) #mapping Ilumina methylation array data to the genome
@@ -45,8 +46,8 @@
         quantileNormalize = TRUE, stratified = TRUE,
         mergeManifest = FALSE, sex = NULL) #optional - implements stratified quantile normalization preprocessing
 	}  else if ('$optpp' == "ppsnp" ) {
-	#snps <- getSnpInfo(GRSet) #optional - retrieve the chromosome and the position of each SNP
-	#write.table(snps, '$table')
+	snps <- getSnpInfo(GRSet) #optional - retrieve the chromosome and the position of each SNP
+	write.table(snps, '$table')
 	GRSet <- dropLociWithSnps(GRSet, snps=c("SBE","CpG"), maf=0) #optional - drop the probes that contain either a SNP at the CpG interrogation or at the single nucleotide extensions
         } 
 
