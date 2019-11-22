@@ -1,5 +1,5 @@
-<tool id="minfi_450k_analysis" name="450k Methylation Array Analysis" version="2.1.0">
-    <description>450k Methylation Array Analysis</description>
+<tool id="minfi_450k_analysis" name="Infinium HumanMethylation450 BeadChip" version="2.1.0">
+    <description>Determines differentially methylated regions and positions from idat files</description>
     <macros>
         <import>macros.xml</import>
     </macros>
@@ -114,15 +114,15 @@
 
         ]]> </configfile>
         </configfiles>
-	<inputs>
-		<param name="optpp" type="select" label="Optional) Preprocessing Method" help="Mapping Ilumina methylation array data to the genome with or without additional preprocess.">
+	<inputs>		
+	<param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
+        <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" />
+        <param name="optpp" type="select" label="Optional) Preprocessing Method" help="Mapping Ilumina methylation array data to the genome with or without additional preprocess.">
             <option value="na">No Selection (use default)</option>
 	    <option value="ppfun">Preprocess Funnorm</option>
 	    <option value="ppq">Preprocess Quantile</option>
             <option value="ppsnp">Remove SNPs</option>
-        </param>		
-	<param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files"/>
-        <param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" />
+        </param> 
         <param type="data" name="phenotype_table" format="tabular" label="Phenotype Table"
             help="Phenotype Table must include the following information: sampleID, phenotype and paird or unpaired samples column"/>
         <param name="maxgap_size" type="integer" value="250" label="maxGap Size"
@@ -138,7 +138,7 @@
 	   <param name="phenotype" type="select" label="Phenotype Type">
             <option value="categorical">categorical</option>
 	    <option value="continuous">continuous</option>
-	   </param>
+	</param>
         <param name="q_cutoff" type="float" value="1" label="qCutoff Size" help="DMPs with an FDR q-value greater than this will not be returned."/>
         <param name="variance_shrinkage" type="boolean" truevalue="TRUE" falsevalue="FALSE" label="Variance Shrinkage" help="Enable variance shrinkage is recommended when sample sizes are small"/>
         <param type="data" name="ucsc_genome" format="gtf" label="Genome Table" help="UCSC genome data Methyl450"/>
