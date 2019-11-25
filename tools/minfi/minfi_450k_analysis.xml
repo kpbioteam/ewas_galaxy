@@ -108,7 +108,8 @@
 
         data <- merge(dmp, tab, by="names",sort = TRUE)
 
-        data <- data[,c(6,7,8,1,4,5)]
+        col_order <- c("chr","start","end","names","intercept", "pval", "qval", "f")
+        data <- data[, col_order]
 
         write.table(data, file= '$dmp', quote = FALSE,col.names = TRUE, row.names = FALSE, sep = "\t") #find differentially methylated positions
 
