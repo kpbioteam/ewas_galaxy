@@ -77,8 +77,7 @@
         nullMethod = nullMethod,
         B = B) #find differentially methylated regions
 
-	dmrGR <- dmrs\$table[,c(1,2,3)]
-        colnames(dmrGR) <- c("chr","start","end")
+	dmrGR <- dmrs\$table[,c("chr","start","end")]
 
 	write.table(dmrGR, file= '$dmr', quote = FALSE,col.names = TRUE, row.names = FALSE, sep = "\t")
 
@@ -148,8 +147,8 @@
              <data name="qctab" format="txt" label="Quality Control Report"/>
 	     <data name="qcpng" format="png" label="Quality Control Plot"/>
 	     <data name="table" format="txt" label="SNPInfo Table"/>
-	     <data name="dmr" format="interval" label="Differentially Methylated Regions"/>   
-	     <data name="dmp" format="interval" label="Differentially Methylated Positions"/>
+	     <data name="dmr" format="bed" label="Differentially Methylated Regions"/>   
+	     <data name="dmp" format="bed" label="Differentially Methylated Positions"/>
                </outputs>
              <tests>
          <test>
@@ -168,8 +167,8 @@
 	    <output name="qctab" file="Quality_Control_Report.txt"/>
 	    <output name="qcpng" file="Quality_Control_Plot.png" compare="sim_size"/>
 	    <output name="table" file="SNPInfo_Table.txt"/>
-	    <output name="dmr" file="Differentially_Methylated_Regions.interval"/>
-	    <output name="dmp" file="Differentially_Methylated_Positions.interval"/>
+	    <output name="dmr" file="Differentially_Methylated_Regions.bed"/>
+	    <output name="dmp" file="Differentially_Methylated_Positions.bed"/>
         </test>
     </tests>
     <help><![CDATA[
