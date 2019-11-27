@@ -1,4 +1,4 @@
-#!/home/krzys/ewas_galaxy/tools/minfi/.venv/bin/python2
+#!/media/krzys/d/ewas_galaxy/tools/minfi/.venv/bin/python2
 
 # $Id: rst2xetex.py 7847 2015-03-17 17:30:47Z milde $
 # Author: Guenter Milde

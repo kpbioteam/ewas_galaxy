@@ -1,4 +1,4 @@
-#!/home/krzys/ewas_galaxy/tools/minfi/.venv/bin/python2
+#!/media/krzys/d/ewas_galaxy/tools/minfi/.venv/bin/python2
 from boto.manage.server import Server
 if __name__ == "__main__":
     from optparse import OptionParser

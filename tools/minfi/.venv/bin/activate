@@ -40,7 +40,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="/home/krzys/ewas_galaxy/tools/minfi/.venv"
+VIRTUAL_ENV="/media/krzys/d/ewas_galaxy/tools/minfi/.venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

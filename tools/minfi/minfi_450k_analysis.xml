@@ -79,7 +79,8 @@
 
 	dmrGR <- dmrs\$table[,c("chr","start","end")]
 
-	write.table(dmrGR, file= '$dmr', quote = FALSE,col.names = TRUE, row.names = FALSE, sep = "\t")
+        write.table(dmrGR, file="Differentially_Methylated_Regions.bed", quote=F, sep="\t", row.names=F, col.names=F)
+
 
 	###dmp###
 
@@ -109,9 +110,10 @@
 
         col_order <- c("chr","start","end","names","intercept", "pval", "qval", "f")
         data <- data[, col_order]
+	
+	write.table(data, file="Differentially_Methylated_Regions.bed", quote=F, sep="\t", row.names=F, col.names=F)
 
-        write.table(data, file= '$dmp', quote = FALSE,col.names = TRUE, row.names = FALSE, sep = "\t") #find differentially methylated positions
-
+       
         ]]> </configfile>
         </configfiles>
 	<inputs>		
@@ -147,8 +149,8 @@
              <data name="qctab" format="txt" label="Quality Control Report"/>
 	     <data name="qcpng" format="png" label="Quality Control Plot"/>
 	     <data name="table" format="txt" label="SNPInfo Table"/>
-	     <data name="dmr" format="bed" label="Differentially Methylated Regions"/>   
-	     <data name="dmp" format="bed" label="Differentially Methylated Positions"/>
+	     <data name="dmr" format="tabular" label="Differentially Methylated Regions"/>   
+	     <data name="dmp" format="tabular" label="Differentially Methylated Positions"/>
                </outputs>
              <tests>
          <test>
@@ -167,8 +169,8 @@
 	    <output name="qctab" file="Quality_Control_Report.txt"/>
 	    <output name="qcpng" file="Quality_Control_Plot.png" compare="sim_size"/>
 	    <output name="table" file="SNPInfo_Table.txt"/>
-	    <output name="dmr" file="Differentially_Methylated_Regions.bed"/>
-	    <output name="dmp" file="Differentially_Methylated_Positions.bed"/>
+	    <output name="dmr" file="Differentially_Methylated_Regions.tabular"/>
+	    <output name="dmp" file="Differentially_Methylated_Positions.tabular"/>
         </test>
     </tests>
     <help><![CDATA[

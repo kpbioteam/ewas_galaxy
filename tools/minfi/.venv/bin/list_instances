@@ -1,4 +1,4 @@
-#!/home/krzys/ewas_galaxy/tools/minfi/.venv/bin/python2
+#!/media/krzys/d/ewas_galaxy/tools/minfi/.venv/bin/python2
 
 import sys
 from operator import attrgetter

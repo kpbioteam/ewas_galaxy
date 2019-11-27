@@ -1,4 +1,4 @@
-#!/home/krzys/ewas_galaxy/tools/minfi/.venv/bin/python2
+#!/media/krzys/d/ewas_galaxy/tools/minfi/.venv/bin/python2
 
 # $Id: rst2latex.py 5905 2009-04-16 12:04:49Z milde $
 # Author: David Goodger <goodger@python.org>
