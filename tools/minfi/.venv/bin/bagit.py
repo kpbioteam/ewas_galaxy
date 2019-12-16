@@ -1,4 +1,4 @@
-#!/media/krzys/d/ewas_galaxy/tools/minfi/.venv/bin/python2
+#!/home/krzys/ewas_galaxy/tools/minfi/.venv/bin/python2
 # encoding: utf-8
 
 from __future__ import absolute_import, division, print_function, unicode_literals

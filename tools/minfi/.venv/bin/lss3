@@ -1,4 +1,4 @@
-#!/media/krzys/d/ewas_galaxy/tools/minfi/.venv/bin/python2
+#!/home/krzys/ewas_galaxy/tools/minfi/.venv/bin/python2
 import boto
 from boto.exception import S3ResponseError
 from boto.s3.connection import OrdinaryCallingFormat

@@ -1,4 +1,4 @@
-#!/media/krzys/d/ewas_galaxy/tools/minfi/.venv/bin/python2
+#!/home/krzys/ewas_galaxy/tools/minfi/.venv/bin/python2
 
 # -*- coding: utf-8 -*-
 import re

@@ -1,4 +1,4 @@
-#!/media/krzys/d/ewas_galaxy/tools/minfi/.venv/bin/python2
+#!/home/krzys/ewas_galaxy/tools/minfi/.venv/bin/python2
 # Author: Chris Moyer
 #
 # cfadmin is similar to sdbadmin for CloudFront, it's a simple

@@ -1,4 +1,4 @@
-#!/media/krzys/d/ewas_galaxy/tools/minfi/.venv/bin/python2
+#!/home/krzys/ewas_galaxy/tools/minfi/.venv/bin/python2
 
 # $Id: rst2pseudoxml.py 4564 2006-05-21 20:44:42Z wiemann $
 # Author: David Goodger <goodger@python.org>

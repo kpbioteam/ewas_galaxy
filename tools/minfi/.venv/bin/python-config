@@ -1,4 +1,4 @@
-#!/media/krzys/d/ewas_galaxy/tools/minfi/.venv/bin/python
+#!/home/krzys/ewas_galaxy/tools/minfi/.venv/bin/python
 
 import sys
 import getopt
