@@ -120,4 +120,5 @@ tool_test_output.json
  pyvenv.cfg
  .venv
  pip-selfcheck.json
-
+# R test scripts
+R_test_scripts/
