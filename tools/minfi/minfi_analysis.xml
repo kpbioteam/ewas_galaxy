@@ -19,9 +19,11 @@
       ]]></command>
       <configfiles>
       <configfile name="minfi_analysis_script"><![CDATA[
-        require("minfi", quietly = TRUE)
+	require("minfi", quietly = TRUE)
+	require("IlluminaHumanMethylation27kanno.ilmn12.hg19", quietly = TRUE)
 	require("IlluminaHumanMethylation450kanno.ilmn12.hg19", quietly = TRUE)
-        options(warn = -1)
+        require("IlluminaHumanMethylationEPICanno.ilm10b4.hg19", quietly = TRUE)
+	options(warn = -1)
 	RGSet <- read.metharray(list.files(pattern="_Red.idat")) #load .IDAT files
 
 	MSet <- preprocessRaw(RGSet) #create objects contains CpGs signals
