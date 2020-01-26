@@ -92,8 +92,8 @@
 	]]> </configfile>
         </configfiles>
 	<inputs>	
- 	<param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files" help="Red .IDAT files extension is followed by staining using red fluorescent anti-DNP antibody."/>
-	<param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" help="Green .IDAT files extension is followed by staining using  green fluorescent streptavidin."/>
+ 	<param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files" help="Red .IDAT files extension is followed by the unmethylated signal intensity read in the red channel."/>
+	<param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" help="Green .IDAT files extension is followed by the methylated signal intensity read in the green channel."/>
             <param name="optpp" type="select" label="(Optional) Preprocessing Method" help="Mapping Ilumina methylation array data to the genome with or without additional preprocess.">
             <option value="na">No Selection (use default)</option>
 	    <option value="ppfun">Preprocess Funnorm</option>
