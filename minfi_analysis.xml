@@ -169,6 +169,7 @@ The workflow combines 5 main steps, starting with raw intensity data loading (.i
 
 *Phenotype Table*: table of compared probes and their characteristics, may be categorical (e.g. cancer vs. normal) or continuous (e.g. blood pressure).   
 
+
 ========== ============== ===============
 Accession  Sensitivity    Treatment
 ---------- -------------- ---------------
@@ -177,7 +178,8 @@ GSM1588704 sensitive      MAPKi
 GSM1588705 sensitive      MAPKi
 ---------- -------------- ---------------
 GSM1588706 resistant      BRAFi
-========== ============== ===============
+========== ============== ===============    
+
 
 *Genome Table*: a reference genome that contains the nucleotide sequence of the chromosomes, It is representative of a specific genome build and release.   
 
