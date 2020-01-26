@@ -178,6 +178,7 @@ GSM1588705 sensitive      MAPKi
 ---------- -------------- ---------------
 GSM1588706 resistant      BRAFi
 ========== ============== ===============    
+
 *Note*: phenotype covariate table must include the following information:
 sampleID/Accession, phenotype and paird or unpaired samples column
 
