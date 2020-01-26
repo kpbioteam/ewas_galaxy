@@ -92,8 +92,8 @@
 	]]> </configfile>
         </configfiles>
 	<inputs>	
- 	<param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files" help="Red .IDAT files extension is followed by staining using red fluorescent anti-DNP antibody"/>
-	<param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" help="Green .IDAT files extension is followed by staining using  green fluorescent streptavidin"/>
+ 	<param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files" help="Red .IDAT files extension is followed by staining using red fluorescent anti-DNP antibody."/>
+	<param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" help="Green .IDAT files extension is followed by staining using  green fluorescent streptavidin."/>
             <param name="optpp" type="select" label="(Optional) Preprocessing Method" help="Mapping Ilumina methylation array data to the genome with or without additional preprocess.">
             <option value="na">No Selection (use default)</option>
 	    <option value="ppfun">Preprocess Funnorm</option>
@@ -101,9 +101,9 @@
             <option value="ppsnp">Remove SNPs</option>
             </param> 
             <param type="data" name="phenotype_table" format="tabular" label="Phenotype Table"
-            help="Phenotype Table must include the following information: sampleID, phenotype and paird or unpaired samples column"/>
+            help="Phenotype Table must include the following information: sampleID, phenotype and paird or unpaired samples column."/>
             <param name="maxgap_size" type="integer" value="250" label="maxGap Size"
-            help="If cluster is not provided this maximum location gap will be used to define cluster"/>
+            help="If cluster is not provided this maximum location gap will be used to define cluster."/>
             <param name="cutoff_size" type="float" value="0.1" label="Cutoff Size"
             help="A numeric value. Values of the estimate of the genomic profile above the cutoff or below the negative of the cutoff will be used as candidate regions. It is possible to give two separate values (upper and lower bounds). If one value is given, the lower bound is minus the value."/> 
             <param name="number_of_resamples" type="integer" value="0" label="Number of Resamples"
@@ -112,15 +112,15 @@
             <option value="permutation" selected="True">permutation</option>
             <option value="bootstrap">bootstrap</option>
             </param>
-            <param type="data" name="phenotype_table" format="tabular" label="Phenotype Table"/>
+            <param type="data" name="phenotype_table" format="tabular" label="Phenotype Table" help="Table of compared probes and their characteristics, may be categorical (e.g. cancer vs. normal) or continuous (e.g. blood pressure)."/>
             <param name="phenotype" type="select" label="Phenotype Type">
             <option value="categorical">categorical</option>
             <option value="continuous">continuous</option>
             </param> 
             <param name="q_cutoff" type="float" value="1" label="qCutoff Size" help="DMPs with an FDR q-value greater than this will not be returned."/>
             <param name="variance_shrinkage" type="boolean" truevalue="TRUE" falsevalue="FALSE" label="Variance Shrinkage"
-            help="Enable variance shrinkage is recommended when sample sizes are small"/>
-            <param type="data" name="ucsc_genome" format="gtf" label="Genome Table" help="Reference Sequence e.g. wgEncodeHaibMethyl450Gm12878SitesRep1"/>
+            help="Enable variance shrinkage is recommended when sample sizes are small."/>
+            <param type="data" name="ucsc_genome" format="gtf" label="Genome Table" help="Reference Sequence e.g. wgEncodeHaibMethyl450Gm12878SitesRep1."/>
         </inputs>
 	<outputs>
 		<data name="qctab" format="txt" label="Quality Control Report"/>
