@@ -94,7 +94,7 @@
 	<inputs>	
  	<param type="data" name="files_red" multiple="true" format="idat" label="Red .IDAT files" help="Red .IDAT files extension is followed by the unmethylated signal intensity read in the red channel."/>
 	<param type="data" name="files_grn" multiple="true" format="idat" label="Green .IDAT files" help="Green .IDAT files extension is followed by the methylated signal intensity read in the green channel."/>
-            <param name="optpp" type="select" label="(Optional) Preprocessing Method" help="Mapping Ilumina methylation array data to the genome with or without additional preprocess.">
+            <param name="optpp" type="select" label="(Optional) Preprocessing Method" help="Mapping Ilumina methylation array data to the genome with or without additional preprocessing methods.">
             <option value="na">No Selection (use default)</option>
 	    <option value="ppfun">Preprocess Funnorm</option>
 	    <option value="ppq">Preprocess Quantile</option>
@@ -112,7 +112,7 @@
             <option value="permutation" selected="True">permutation</option>
             <option value="bootstrap">bootstrap</option>
             </param>
-            <param type="data" name="phenotype_table" format="tabular" label="Phenotype Table" help="Table of compared probes and their characteristics, may be categorical (e.g. cancer vs. normal) or continuous (e.g. blood pressure)."/>
+            <param type="data" name="phenotype_table" format="tabular" label="Phenotype Table" help="Table of compared samples and their characteristics, may be categorical (e.g. cancer vs. normal) or continuous (e.g. blood pressure)."/>
             <param name="phenotype" type="select" label="Phenotype Type">
             <option value="categorical">categorical</option>
             <option value="continuous">continuous</option>
@@ -167,7 +167,7 @@ The workflow combines 5 main steps, starting with raw intensity data loading (.i
 
 *(optional) Preprocessing Methods*: by this step probes can be stratified by region via quantile normalization or by extended implementation of functional normalisation recommended for cases where global changes are expected such as in cancer-normal comparisons. In addition unwanted probes containing either a SNP at the CpG interrogation or at the single nucleotide extension can be removed (recommended).   
 
-*Phenotype Table*: table of compared probes and their characteristics, may be categorical (e.g. cancer vs. normal) or continuous (e.g. blood pressure).   
+*Phenotype Table*: table of compared samples and their characteristics, may be categorical (e.g. cancer vs. normal) or continuous (e.g. blood pressure).   
 
 ========== ============== ===============
 Accession  Sensitivity    Treatment
