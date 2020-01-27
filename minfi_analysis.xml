@@ -1,5 +1,5 @@
 <tool id="minfi_analysis" name="Infinium Human Methylation BeadChip" version="2.1.0">
-    <description>Determines differentially methylated regions and positions from idat files</description>
+    <description>Determines differentially methylated regions and positions from Infinium Methylation Assays</description>
     <macros>
         <import>macros.xml</import>
     </macros>
