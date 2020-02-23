@@ -158,7 +158,7 @@ The workflow combines 5 main steps, starting with raw intensity data loading (.i
 
 ***Inputs***    
 
-*Series of .IDAT files*: red and green .idat file for each sample on the chip intensity data.    
+*Series of .IDAT files*: matching red and green .idat file for each sample on the chip intensity data.    
 
 *(optional) Preprocessing Methods*: by this step probes can be stratified by region via quantile normalisation or by extended implementation of functional normalisation recommended for cases where global changes are expected such as in cancer-normal comparisons. In addition unwanted probes containing either an SNP at the CpG interrogation or at the single nucleotide extension can be removed (recommended).   
 
