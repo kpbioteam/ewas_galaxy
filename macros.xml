@@ -15,7 +15,7 @@
       <yield/>
     </requirements>
   </xml>
-  <token name="@SUFFIX_VERION@" value="2"/>>
+  <token name="@SUFFIX_VERION@" value="1"/>>
   <token name="@MINFI_VERSION@">1.32.0</token>
   <xml name="citations">
     <citations>
