@@ -117,7 +117,7 @@
     <param name='q_cutoff' type='float' value='1' label='qCutoff Size' help='DMPs with an FDR q-value greater than this will not be returned.'/>
     <param name='variance_shrinkage' type='boolean' truevalue='TRUE' falsevalue='FALSE' label='Variance Shrinkage' help='Enable variance shrinkage is recommended when sample sizes are small.'/>
     <param type='data' name='ucsc_genome' format='gtf' label='Genome Table' help='Reference Sequence e.g. wgEncodeHaibMethyl450Gm12878SitesRep1.'/>
-    <param name='force' type="boolean" truevalue="TRUE" falsevalue="FALSE" value="FALSE" label="Force combine IDAT files with different number of probes" help="It is possible to combine IDAT files from 
+    <param name='force' type="boolean" truevalue="TRUE" falsevalue="FALSE" checked="false" label="Force combine IDAT files with different number of probes" help="It is possible to combine IDAT files from 
       the same inferred array, but with different number of probes, into the same RGChannelSet by setting force=TRUE. The output object will have the same number of probes 
       as the smallest array being parsed; effectively removing probes which could have been analyzed." />
   </inputs>
