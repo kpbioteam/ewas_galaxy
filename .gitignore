@@ -122,3 +122,4 @@ tool_test_output.json
  pip-selfcheck.json
 # R test scripts
 R_test_scripts/
+.planemo-run/

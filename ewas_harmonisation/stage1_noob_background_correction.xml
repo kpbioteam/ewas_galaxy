@@ -1,0 +1,93 @@
+<?xml version='1.0'?>
+<tool id='cpg_harmonisation_stage1_noob' name='CpG Harmonisation Stage 1: Noob Background Correction' version='@TOOL_VERSION@' profile='@PROFILE@'>
+  <description>Within-array background correction and single dye-bias adjustment (minfi::preprocessNoob)</description>
+  <macros>
+    <import>macros.xml</import>
+  </macros>
+  <expand macro='requirements'/>
+  <expand macro='stdio'/>
+  <command detect_errors='exit_code'><![CDATA[
+      #for $counter, $input in enumerate($files_red):
+        #set $redname = str( getattr( $input, 'element_identifier', 'sample' ) ).replace( '/', '-' ).replace( '\t', '-' )
+        ln -s $input ./${redname} &&
+      #end for
+      #for $counter, $input in enumerate($files_grn):
+        #set $grnname = str( getattr( $input, 'element_identifier', 'sample' ) ).replace( '/', '-' ).replace( '\t', '-' )
+        ln -s $input ./${grnname} &&
+      #end for
+      Rscript '$stage1_script'
+      ]]></command>
+  <configfiles>
+    <configfile name='stage1_script'><![CDATA[
+        require('minfi', quietly = TRUE)
+        options(warn = -1)
+
+        RGSet <- read.metharray(list.files(pattern='_Red.idat')) #load .IDAT files, mixed 450K/EPIC supported
+
+        MSet.noob <- preprocessNoob(RGSet, dyeMethod = 'single') #within-array background correction + single dye-bias adjustment
+
+        qc <- getQC(MSet.noob)
+        ## Round to 6 significant figures: raw double precision in mMed/uMed varies
+        ## in the far decimal places across R/Bioconductor point releases (e.g.
+        ## different BLAS backends), which made byte-exact test comparisons fail
+        ## despite effectively identical values.
+        qc\$mMed <- signif(qc\$mMed, 6)
+        qc\$uMed <- signif(qc\$uMed, 6)
+        write.table(qc, '$qctab')
+        png('$qcpng')
+        plotQC(qc)
+        dev.off()
+
+        RSet <- ratioConvert(MSet.noob, what = 'both', keepCN = TRUE)
+        GRSet <- mapToGenome(RSet)
+
+        save(GRSet, file = '$grset_out')
+      ]]></configfile>
+  </configfiles>
+  <inputs>
+    <param type='data' name='files_red' multiple='true' format='idat' label='Red .IDAT files' help='Red .IDAT files - unmethylated signal intensity read in the red channel. One per sample; mixed 450K/EPIC samples supported.'/>
+    <param type='data' name='files_grn' multiple='true' format='idat' label='Green .IDAT files' help='Green .IDAT files - methylated signal intensity read in the green channel. Must match Red files 1:1 by sample.'/>
+  </inputs>
+  <outputs>
+    <data name='grset_out' format='rdata' label='Stage 1 GenomicRatioSet (Noob-corrected)'/>
+    <data name='qctab' format='txt' label='Stage 1 Quality Control Report'/>
+    <data name='qcpng' format='png' label='Stage 1 Quality Control Plot'/>
+  </outputs>
+  <tests>
+    <test>
+      <param name='files_red' value='GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat' ftype='idat'/>
+      <param name='files_grn' value='GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat' ftype='idat'/>
+      <output name='grset_out' file='Stage1_GRSet.rda' compare='sim_size'/>
+      <output name='qctab' file='Stage1_Quality_Control_Report.txt'/>
+      <output name='qcpng' file='Stage1_Quality_Control_Plot.png' compare='sim_size' delta='16000'/>
+    </test>
+  </tests>
+  <help><![CDATA[
+
+.. class:: infomark
+
+**What it does**
+
+Stage 1 of the cross-array (450K/EPIC) harmonisation pipeline. Loads raw Red/Green .IDAT
+channel files and applies minfi's Noob (normal-exponential out-of-band) background
+correction with single-sample dye-bias adjustment (``preprocessNoob(dyeMethod='single')``),
+producing a within-array corrected ``GenomicRatioSet``. This runs independently of array
+type, so 450K and EPIC samples can be processed through this stage before being combined
+downstream.
+
+***Inputs***
+
+*Series of .IDAT files*: matching red and green .idat file for each sample on the chip
+intensity data.
+
+***Outputs***
+
+*Stage 1 GenomicRatioSet*: an ``.rda`` file containing a ``GRSet`` object, consumed by
+Stage 2 (cross-platform quantile normalisation).
+
+*Quality Control Report and Plot*: log median intensity in the methylated (M) and
+unmethylated (U) channels, as produced by ``minfi::getQC``/``plotQC``.
+
+  ]]></help>
+  <expand macro='citations'/>
+</tool>

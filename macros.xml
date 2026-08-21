@@ -12,6 +12,8 @@
       <requirement type="package" version="0.3.0">bioconductor-illuminahumanmethylationepicmanifest</requirement>
       <requirement type="package" version="0.6.0">bioconductor-illuminahumanmethylationepicanno.ilm10b4.hg19</requirement>
       <requirement type="package" version="1.46.0">bioconductor-rtracklayer</requirement>
+      <requirement type="package" version="1.30.0">bioconductor-watermelon</requirement>
+      <requirement type="package" version="3.34.0">bioconductor-sva</requirement>
       <yield/>
     </requirements>
   </xml>

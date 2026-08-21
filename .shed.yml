@@ -3,5 +3,18 @@ categories:
 description: Infinium Human Methylation BeadChip Analysis
 homepage_url: https://bioconductor.org/packages/release/bioc/html/minfi.html
 name: ewastools
-owner: kpbioteam
-remote_repository_url: https://github.com/kpbioteam/ewas_galaxy
+owner: kkamieniecka
+remote_repository_url: https://github.com/kkamieniecka/ewas_galaxy
+exclude:
+  - ewas_harmonisation/**
+  # Large binary test fixtures excluded from the shed upload (Tool Shed's
+  # size limit rejects them; test-data/ totals 282MB). Referenced instead via
+  # location= URLs on the corresponding <test> param/output tags in
+  # minfi_analysis.xml, so Tool Shed's post-install test verification still
+  # fetches real fixtures - see minfi_analysis.xml for the GitHub raw/LFS
+  # media URLs this points to.
+  - test-data/GSM*.idat
+  - test-data/ucsc.gtf
+  - test-data/GRSet_common.rda
+  - test-data/SNPInfo_Table.txt
+  - test-data/Differentially_Methylated_*.bed

@@ -1,0 +1,45 @@
+name: ewas_harmonisation
+owner: kpbioteam
+description: Cross-array (450K/EPIC) harmonisation pipeline extending the EWAS-Galaxy suite
+long_description: >
+  Four chained Galaxy tools implementing within-array background correction (Noob),
+  cross-platform quantile normalisation (betaqn), batch correction (ComBat), and
+  restriction to common 450K/EPIC probes. Designed to sit alongside the existing
+  EWAS-Galaxy minfi_* tools (kpbioteam/ewastools), producing a harmonised
+  GenomicRatioSet suitable as input to the existing DMR/DMP hunting steps.
+homepage_url: https://github.com/kpbioteam/ewas_harmonisation
+remote_repository_url: https://github.com/kpbioteam/ewas_harmonisation
+type: unrestricted
+categories:
+  - Epigenetics
+  - Transcriptomics
+suite:
+  name: suite_ewas_harmonisation
+  description: Cross-array (450K/EPIC) harmonisation pipeline extending the EWAS-Galaxy suite
+  long_description: >
+    Four chained Galaxy tools implementing within-array background correction (Noob),
+    cross-platform quantile normalisation (betaqn), batch correction (ComBat), and
+    restriction to common 450K/EPIC probes. Designed to sit alongside the existing
+    EWAS-Galaxy minfi_* tools (kpbioteam/ewastools), producing a harmonised
+    GenomicRatioSet suitable as input to the existing DMR/DMP hunting steps.
+repositories:
+  cpg_harmonisation_stage1_noob:
+    include:
+      - stage1_noob_background_correction.xml
+      - macros.xml
+      - test-data/*
+  cpg_harmonisation_stage2_betaqn:
+    include:
+      - stage2_betaqn_crossplatform_normalisation.xml
+      - macros.xml
+      - test-data/*
+  cpg_harmonisation_stage3_combat:
+    include:
+      - stage3_combat_batch_correction.xml
+      - macros.xml
+      - test-data/*
+  cpg_harmonisation_stage4_commonprobes:
+    include:
+      - stage4_common_probe_restriction.xml
+      - macros.xml
+      - test-data/*

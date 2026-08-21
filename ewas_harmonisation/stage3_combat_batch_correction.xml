@@ -1,0 +1,113 @@
+<?xml version='1.0'?>
+<tool id='cpg_harmonisation_stage3_combat' name='CpG Harmonisation Stage 3: ComBat Batch Correction' version='@TOOL_VERSION@' profile='@PROFILE@'>
+  <description>Empirical Bayes batch correction using cohort/array-of-origin as batch covariate (sva::ComBat)</description>
+  <macros>
+    <import>macros.xml</import>
+  </macros>
+  <expand macro='requirements'/>
+  <expand macro='stdio'/>
+  <command detect_errors='exit_code'><![CDATA[
+      Rscript '$stage3_script'
+      ]]></command>
+  <configfiles>
+    <configfile name='stage3_script'><![CDATA[
+        require('minfi', quietly = TRUE)
+        require('sva', quietly = TRUE)
+        options(warn = -1)
+
+        load('$grset_in')
+        if (!exists('GRSet')) {
+          stop("grset_in .rda must contain an object named 'GRSet'")
+        }
+
+        pheno <- read.table('$phenotype_table', header = TRUE, sep = '\t', check.names = FALSE)
+
+        batch <- pheno[['$batch_column']]
+
+        #if str($covariate_column) != 'none'
+        mod <- model.matrix(~ pheno[['$covariate_column']])
+        #else
+        mod <- model.matrix(~ 1, data = pheno)
+        #end if
+
+        betas <- getBeta(GRSet)
+        betas.combat <- ComBat(dat = betas, batch = batch, mod = mod, par.prior = TRUE) #Empirical Bayes batch correction
+        betas.combat[betas.combat < 0] <- 0.0001 #ComBat can push values slightly outside [0,1]; clamp back into beta range
+        betas.combat[betas.combat > 1] <- 0.9999
+
+        assay(GRSet, 'Beta') <- betas.combat
+
+        pca <- prcomp(t(na.omit(betas.combat)))
+        batch.factor <- as.factor(batch)
+        png('$pcapng')
+        plot(pca\$x[,1], pca\$x[,2], col = batch.factor, pch = 19,
+             xlab = 'PC1', ylab = 'PC2', main = 'Post-ComBat PCA, coloured by batch')
+        legend('topright', legend = levels(batch.factor), col = seq_along(levels(batch.factor)), pch = 19)
+        dev.off()
+
+        save(GRSet, file = '$grset_out')
+      ]]></configfile>
+  </configfiles>
+  <inputs>
+    <param type='data' name='grset_in' format='rdata' label='Stage 2 GenomicRatioSet' help='Must contain an object named GRSet - the Stage 2 (betaqn cross-platform normalisation) output.'/>
+    <param type='data' name='phenotype_table' format='tabular' label='Phenotype / Batch Table' help='Tab-separated table with a header row, one row per sample, matching the sample order of the GenomicRatioSet. Must include the batch column named below.'/>
+    <param name='batch_column' type='text' value='cohort' label='Batch Column Name' help='Name of the column in the phenotype table identifying batch/cohort/array-of-origin, passed to ComBat as the batch covariate.'>
+      <sanitizer invalid_char=''>
+        <valid initial='string.ascii_letters,string.digits'>
+          <add value='_'/>
+        </valid>
+      </sanitizer>
+    </param>
+    <param name='covariate_column' type='text' value='none' label='Covariate Column Name (optional)' help='Name of a column to preserve as a biological covariate in the ComBat model (e.g. phenotype/disease status), or "none" to correct for batch only.'>
+      <sanitizer invalid_char=''>
+        <valid initial='string.ascii_letters,string.digits'>
+          <add value='_'/>
+        </valid>
+      </sanitizer>
+    </param>
+  </inputs>
+  <outputs>
+    <data name='grset_out' format='rdata' label='Stage 3 GenomicRatioSet (ComBat-corrected)'/>
+    <data name='pcapng' format='png' label='Stage 3 PCA Plot (by batch)'/>
+  </outputs>
+  <tests>
+    <test>
+      <param name='grset_in' value='Stage2_GRSet.rda' ftype='rdata'/>
+      <param name='phenotype_table' value='phenotypeTable.txt' ftype='tabular'/>
+      <param name='batch_column' value='Treatment'/>
+      <param name='covariate_column' value='none'/>
+      <output name='grset_out' file='Stage3_GRSet.rda' compare='sim_size'/>
+      <output name='pcapng' file='Stage3_PCA_Plot.png' compare='sim_size' delta='16000'/>
+    </test>
+  </tests>
+  <help><![CDATA[
+
+.. class:: infomark
+
+**What it does**
+
+Stage 3 of the cross-array (450K/EPIC) harmonisation pipeline. Takes the betaqn-normalised
+``GenomicRatioSet`` from Stage 2 and applies ``sva::ComBat`` empirical Bayes batch
+correction, using cohort/array-of-origin (or another user-specified column) as the batch
+covariate. An optional biological covariate column can be preserved in the correction
+model so that batch effects are removed without erasing the signal of interest.
+
+***Inputs***
+
+*Stage 2 GenomicRatioSet*: ``.rda`` output of the cross-platform quantile normalisation
+stage.
+
+*Phenotype / Batch Table*: tab-separated table with a header row, one row per sample,
+matching the sample order of the GenomicRatioSet. Must include a batch/cohort column.
+
+***Outputs***
+
+*Stage 3 GenomicRatioSet*: an ``.rda`` file containing the batch-corrected ``GRSet``,
+consumed by Stage 4 (restriction to common probes).
+
+*PCA Plot*: principal component analysis of the batch-corrected beta matrix, coloured by
+batch, useful for visually confirming batch effects have been removed.
+
+  ]]></help>
+  <expand macro='citations'/>
+</tool>

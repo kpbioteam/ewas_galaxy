@@ -1,0 +1,3 @@
+QC step skipped: input was a pre-built harmonised GenomicRatioSet (external_grset mode).
+Intensity-based QC is not meaningful for pre-normalised data.
+See the Stage 1 QC report and Stage 2/3 PCA plots from the harmonisation pipeline instead.

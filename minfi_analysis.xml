@@ -1,5 +1,5 @@
 <?xml version='1.0'?>
-<tool id='minfi_analysis' name='Infinium Human Methylation BeadChip' version='2.1.0'>
+<tool id='minfi_analysis' name='Infinium Human Methylation BeadChip' version='2.1.9'>
   <description>Determines differentially methylated regions and positions from Infinium Methylation Assays</description>
   <macros>
     <import>macros.xml</import>
@@ -8,14 +8,43 @@
     <requirement type='package' version='0.6.0'>bioconductor-illuminahumanmethylation450kanno.ilmn12.hg19</requirement>
   </expand>
   <command detect_errors='exit_code'><![CDATA[
-      #for $counter, $input in enumerate($files_red):
+      #if str($input_source.input_mode) == 'raw_idat'
+      #for $counter, $input in enumerate($input_source.files_red):
         #set $redname = str( getattr( $input, 'element_identifier', 'sample' ) ).replace( '/', '-' ).replace( '\t', '-' )
         ln -s $input ./${redname} &&
       #end for
-      #for $counter, $input in enumerate($files_grn):
+      #for $counter, $input in enumerate($input_source.files_grn):
         #set $grnname = str( getattr( $input, 'element_identifier', 'sample' ) ).replace( '/', '-' ).replace( '\t', '-' )
         ln -s $input ./${grnname} &&
       #end for
+      #elif str($input_source.input_mode) == 'harmonised_idat'
+      ## Platform 1's IDATs go in their own subdirectory (not the flat layout
+      ## raw_idat mode uses) so that, when a Platform 2 batch is also supplied,
+      ## each platform can be passed to a separate minfi::read.metharray() call -
+      ## it can only parse one homogeneous array type per call, so platforms
+      ## must be loaded (and Noob-corrected) separately, then merged via
+      ## combineArrays in the script below.
+      mkdir -p platform1 &&
+      #for $counter, $input in enumerate($input_source.files_red):
+        #set $redname = str( getattr( $input, 'element_identifier', 'sample' ) ).replace( '/', '-' ).replace( '\t', '-' )
+        ln -s $input ./platform1/${redname} &&
+      #end for
+      #for $counter, $input in enumerate($input_source.files_grn):
+        #set $grnname = str( getattr( $input, 'element_identifier', 'sample' ) ).replace( '/', '-' ).replace( '\t', '-' )
+        ln -s $input ./platform1/${grnname} &&
+      #end for
+      #if $input_source.files_red_2
+      mkdir -p platform2 &&
+      #for $counter, $input in enumerate($input_source.files_red_2):
+        #set $redname2 = str( getattr( $input, 'element_identifier', 'sample' ) ).replace( '/', '-' ).replace( '\t', '-' )
+        ln -s $input ./platform2/${redname2} &&
+      #end for
+      #for $counter, $input in enumerate($input_source.files_grn_2):
+        #set $grnname2 = str( getattr( $input, 'element_identifier', 'sample' ) ).replace( '/', '-' ).replace( '\t', '-' )
+        ln -s $input ./platform2/${grnname2} &&
+      #end for
+      #end if
+      #end if
       Rscript '$minfi_analysis_script'
       ]]></command>
   <configfiles>
@@ -25,6 +54,156 @@
 	require('IlluminaHumanMethylation450kanno.ilmn12.hg19', quietly = TRUE)
         require('IlluminaHumanMethylationEPICanno.ilm10b4.hg19', quietly = TRUE)
 	options(warn = -1)
+
+        #if str($input_source.input_mode) == 'external_grset'
+        ## Skip internal preprocessing entirely: load an already-harmonised
+        ## GenomicRatioSet, e.g. Stage 4 output of the cross-array harmonisation
+        ## pipeline (Noob -> betaqn -> ComBat -> common-probe restriction).
+        load('$input_source.external_grset')
+        if (!exists('GRSet') && exists('GRSet.common')) {
+          GRSet <- GRSet.common  ## accommodate the harmonisation pipeline's naming
+        }
+        if (!exists('GRSet')) {
+          stop("external_grset .rda must contain an object named 'GRSet' or 'GRSet.common'")
+        }
+
+        ## No raw MSet is available in this mode, so the intensity-based QC plot
+        ## (which needs methylated/unmethylated channel medians) cannot be produced
+        ## here. Quality was already assessed at each stage of the harmonisation
+        ## pipeline (Stage 1 QC report, Stage 2/3 PCA plots) - point users there.
+        writeLines(
+          c("QC step skipped: input was a pre-built harmonised GenomicRatioSet (external_grset mode).",
+            "Intensity-based QC is not meaningful for pre-normalised data.",
+            "See the Stage 1 QC report and Stage 2/3 PCA plots from the harmonisation pipeline instead."),
+          '$qctab'
+        )
+        png('$qcpng')
+        plot.new()
+        title('QC skipped: external_grset mode - see harmonisation pipeline QC/PCA outputs')
+        dev.off()
+        #elif str($input_source.input_mode) == 'harmonised_idat'
+        ## Cross-array (450K/EPIC) harmonisation, run inline from raw IDATs:
+        ## Noob background correction -> betaqn cross-platform normalisation ->
+        ## ComBat batch correction -> restriction to the 450K/EPIC common probe
+        ## set -> straight into DMR/DMP hunting below. Equivalent to chaining
+        ## the four standalone ewas_harmonisation Stage 1-4 tools followed by
+        ## this tool's external_grset mode, but as a single tool run.
+        require('wateRmelon', quietly = TRUE)
+        require('sva', quietly = TRUE)
+        require('IlluminaHumanMethylation450kmanifest', quietly = TRUE)
+        require('IlluminaHumanMethylationEPICmanifest', quietly = TRUE)
+
+        ## Stage 1 (Platform 1): Noob background correction + single dye-bias
+        ## adjustment. Real intensity-based QC is available here (unlike
+        ## external_grset mode, which has no raw MSet to compute it from).
+        RGSet <- read.metharray(list.files(path='platform1', pattern='_Red.idat', full.names=TRUE))
+        MSet.noob <- preprocessNoob(RGSet, dyeMethod = 'single')
+        qc <- getQC(MSet.noob)
+        write.table(qc, '$qctab')
+        png('$qcpng')
+        plotQC(qc)
+        dev.off()
+        RSet <- ratioConvert(MSet.noob, what = 'both', keepCN = TRUE)
+        GRSet <- mapToGenome(RSet)
+
+        #if $input_source.files_red_2
+        ## Stage 1 (Platform 2) + Combine Arrays: a second platform batch was
+        ## supplied (mixed 450K/EPIC study). read.metharray can only parse one
+        ## homogeneous array type per call - "Trying to parse different IDAT
+        ## files, of different size and type" is what it raises if Platform
+        ## 1 and 2 IDATs are mixed into a single call, so Platform 2 is
+        ## Noob-corrected independently here and merged in via combineArrays,
+        ## which aligns both GenomicRatioSets on their shared genomic ranges
+        ## and cbinds the samples together. The QC report/plot above only
+        ## covers Platform 1; Platform 2's own QC isn't reported separately.
+        RGSet2 <- read.metharray(list.files(path='platform2', pattern='_Red.idat', full.names=TRUE))
+        MSet2.noob <- preprocessNoob(RGSet2, dyeMethod = 'single')
+        RSet2 <- ratioConvert(MSet2.noob, what = 'both', keepCN = TRUE)
+        GRSet2 <- mapToGenome(RSet2)
+        ## combineArrays' internal colData merge hits a real bug ("unable to
+        ## find an inherited method for function 'colData<-' for signature
+        ## GenomicRatioSet, AsIs") when both inputs have completely empty
+        ## colData (0 columns), which is the case here since neither GRSet
+        ## has any pData set. Giving each a real column first avoids the
+        ## degenerate empty-data-frame merge that triggers it.
+        pData(GRSet)\$Platform <- 'platform1'
+        pData(GRSet2)\$Platform <- 'platform2'
+        GRSet <- combineArrays(GRSet, GRSet2)
+        #end if
+
+        ## Stage 2: Type I/II-aware cross-platform beta quantile normalisation.
+        betas <- getBeta(GRSet)
+        betas.norm <- betaqn(betas)
+        assay(GRSet, 'Beta') <- betas.norm
+
+        ## Stage 3: ComBat empirical Bayes batch correction. Uses the same
+        ## phenotype table as DMP finding below, but read with a header this
+        ## time for named batch/covariate column lookup (the DMP step further
+        ## down reads it positionally instead - two different conventions on
+        ## the same file, not a conflict).
+        pheno_full <- read.table('$phenotype_table', header = TRUE, sep = '\t', check.names = FALSE)
+        ## ComBat's batch/mod are read positionally from the phenotype table -
+        ## there's no join by sample name anywhere in this pipeline - so a
+        ## row count that doesn't match the number of samples in betas.norm
+        ## (all Platform 1 samples, plus Platform 2's if used) crashes deep
+        ## inside ComBat's design-matrix math with a bare "non-conformable
+        ## arguments", which doesn't say anything about the phenotype table
+        ## at all. Check the row count explicitly, before anything else here.
+        if (nrow(pheno_full) != ncol(betas.norm)) {
+          stop(sprintf("Phenotype Table has %d row(s) but there are %d sample(s) in your data (Platform 1 IDATs, plus Platform 2's if used). Phenotype Table needs exactly one row per sample, in the same order minfi loads your files (alphabetical by filename; Platform 1 samples first, then Platform 2's).", nrow(pheno_full), ncol(betas.norm)))
+        }
+        batch <- pheno_full[['$input_source.batch_column']]
+        ## ComBat builds its own internal batch design matrix and fails deep
+        ## inside model.matrix.default/contrasts<- with a cryptic "contrasts
+        ## can be applied only to factors with 2 or more levels" if the batch
+        ## column isn't found or every sample shares the same value - check
+        ## for both up front so the real problem (Batch Column Name param vs.
+        ## Phenotype Table contents) is obvious instead of a stack trace
+        ## pointing into ComBat's internals.
+        if (is.null(batch)) {
+          stop(sprintf("Batch Column Name '%s' was not found in the phenotype table's header (columns present: %s). Check the Batch Column Name parameter matches a column in your Phenotype Table exactly.", '$input_source.batch_column', paste(colnames(pheno_full), collapse = ', ')))
+        }
+        ## ComBat internally does as.factor(batch), which silently drops NA
+        ## rather than counting it as a level - so a batch column with blank
+        ## cells can pass a plain unique(batch) < 2 check (NA counts as a
+        ## distinct value there) and still collapse to a single real level
+        ## once inside ComBat, hitting the exact same contrasts<- crash one
+        ## step later. Check for NA explicitly, before the level count.
+        if (any(is.na(batch))) {
+          stop(sprintf("Batch Column Name '%s' has a missing (blank) value for %d of %d samples in the phenotype table. Every sample needs a non-missing batch value for ComBat to run - fill in the blank cell(s) in that column.", '$input_source.batch_column', sum(is.na(batch)), length(batch)))
+        }
+        if (length(unique(batch)) < 2) {
+          stop(sprintf("Batch Column Name '%s' has only one distinct value (%s) across all samples in the phenotype table. ComBat batch correction requires at least 2 batches/cohorts to correct between - if all your samples come from the same batch, set Batch Column Name to a column that actually varies (e.g. array/cohort/processing-date), or use the plain 'Raw .IDAT files' input mode instead, which skips ComBat entirely.", '$input_source.batch_column', unique(batch)[1]))
+        }
+        #if str($input_source.covariate_column) != 'none'
+        covariate <- pheno_full[['$input_source.covariate_column']]
+        ## Same contrasts<- failure mode as the batch column above, but here
+        ## it comes straight from this model.matrix() call rather than from
+        ## inside ComBat - same fixes, checked explicitly up front.
+        if (is.null(covariate)) {
+          stop(sprintf("Covariate Column Name '%s' was not found in the phenotype table's header (columns present: %s). Check the Covariate Column Name parameter matches a column in your Phenotype Table exactly, or set it to 'none' to correct for batch only.", '$input_source.covariate_column', paste(colnames(pheno_full), collapse = ', ')))
+        }
+        if (any(is.na(covariate))) {
+          stop(sprintf("Covariate Column Name '%s' has a missing (blank) value for %d of %d samples in the phenotype table. Every sample needs a non-missing covariate value - fill in the blank cell(s), or set Covariate Column Name to 'none' to correct for batch only.", '$input_source.covariate_column', sum(is.na(covariate)), length(covariate)))
+        }
+        if (length(unique(covariate)) < 2) {
+          stop(sprintf("Covariate Column Name '%s' has only one distinct value (%s) across all samples in the phenotype table. A covariate needs at least 2 distinct values to be modelled - either set Covariate Column Name to a column that actually varies, or set it to 'none' to correct for batch only.", '$input_source.covariate_column', unique(covariate)[1]))
+        }
+        mod <- model.matrix(~ covariate)
+        #else
+        mod <- model.matrix(~ 1, data = pheno_full)
+        #end if
+        betas.combat <- ComBat(dat = betas.norm, batch = batch, mod = mod, par.prior = TRUE)
+        betas.combat[betas.combat < 0] <- 0.0001 ## ComBat can push values slightly outside [0,1]
+        betas.combat[betas.combat > 1] <- 0.9999
+        assay(GRSet, 'Beta') <- betas.combat
+
+        ## Stage 4: restrict to the 450K/EPIC shared probe set.
+        probes450k <- getManifestInfo(IlluminaHumanMethylation450kmanifest, 'locusNames')
+        probesEPIC <- getManifestInfo(IlluminaHumanMethylationEPICmanifest, 'locusNames')
+        common.probes <- intersect(probes450k, probesEPIC)
+        GRSet <- GRSet[rownames(GRSet) %in% common.probes, ]
+        #else
 	RGSet <- read.metharray(list.files(pattern='_Red.idat')) #load .IDAT files
 
 	MSet <- preprocessRaw(RGSet) #create objects contains CpGs signals
@@ -39,24 +218,59 @@
 	GRSet <- mapToGenome(RSet)
 
 
-	if ('$optpp' == 'na' ) {
+	if ('$input_source.optpp' == 'na' ) {
 	GRSet <- mapToGenome(RSet) #mapping Ilumina methylation array data to the genome
-	} else if ('$optpp' == 'ppfun'  ) {
+	} else if ('$input_source.optpp' == 'ppfun'  ) {
 	GRSet <- preprocessFunnorm(RGSet) #optional - implements the functional normalisation algorithm
-	} else  if ('$optpp' == 'ppq' ) {
+	} else  if ('$input_source.optpp' == 'ppq' ) {
 	GRSet <- preprocessQuantile(RGSet, fixOutliers = TRUE,
         removeBadSamples = TRUE, badSampleCutoff = 10.5,
         quantileNormalize = TRUE, stratified = TRUE,
         mergeManifest = FALSE, sex = NULL) #optional - implements stratified quantile normalisation preprocessing
-	}  else if ('$optpp' == 'ppsnp' ) {
+	}  else if ('$input_source.optpp' == 'ppsnp' ) {
 	snps <- getSnpInfo(GRSet) #optional - retrieve the chromosome and the position of each SNP
 	write.table(snps, '$table')
 	GRSet <- dropLociWithSnps(GRSet, snps=c('SBE','CpG'), maf=0) #optional - drop the probes that contain either an SNP at the CpG interrogation or at the single nucleotide extensions
 	}
+        #end if
+
 	pheno <- read.table('$phenotype_table',skip = 1)
+        ## Phenotype Table's 2nd column (V2) is read positionally here and
+        ## again below for dmpFinder - no join by sample name anywhere in
+        ## this pipeline, same as the ComBat batch/covariate columns above.
+        ## A row count mismatch doesn't fail here (model.matrix silently
+        ## recycles/mismatches), but produces bogus results silently or
+        ## crashes later downstream with a message that says nothing about
+        ## the phenotype table - check explicitly, for every input mode.
+        if (nrow(pheno) != ncol(GRSet)) {
+          stop(sprintf("Phenotype Table has %d row(s) but there are %d sample(s) in your data. Phenotype Table needs exactly one row per sample, in the same order minfi loads your files (alphabetical by filename; Platform 1 samples first, then Platform 2's, if used).", nrow(pheno), ncol(GRSet)))
+        }
         group <- pheno\$V2
         pair <- factor(pheno\$V3)
-	
+        #if str($phenotype) == 'categorical'
+        ## dmpFinder's categorical branch (further down) fits a per-group
+        ## mean and computes an F-test per probe from the residual sum of
+        ## squares; if every sample has its own distinct Phenotype Table
+        ## value, there's no within-group replication left, every probe's
+        ## residual df collapses to 0, and every p-value comes out NaN. With
+        ## zero valid p-values left, dmpFinder's internal pi0.est() takes the
+        ## mean of an empty vector (NaN) for every lambda cutoff and hands
+        ## smooth.spline() an all-NaN input, which is the "missing or
+        ## infinite values in inputs are not allowed" crash a user hit -
+        ## nothing in that message points at the phenotype table either.
+        ## bumphunter (right below) tolerates the same degenerate design via
+        ## limma's rank-safe lmFit, so it can succeed even when this will
+        ## fail - check the real requirement (>=2 groups, not one row per
+        ## group) explicitly, before either step runs.
+        group.levels <- unique(as.character(group))
+        if (length(group.levels) < 2) {
+          stop(sprintf("Phenotype Table's 2nd column has only one distinct value (%s) across all samples. With Phenotype Type set to categorical, dmpFinder needs at least 2 groups to compare - check the 2nd column of your Phenotype Table, or switch Phenotype Type to continuous if it's a numeric measurement instead.", group.levels[1]))
+        }
+        if (length(group.levels) >= length(group)) {
+          stop("Phenotype Table's 2nd column has a different value for every single sample (as many groups as samples). With Phenotype Type set to categorical, dmpFinder needs replication within each group - every group having exactly one sample leaves no residual degrees of freedom, and every p-value comes out undefined. Check that the 2nd column of your Phenotype Table is a category label (e.g. case/control) shared by multiple samples, not a per-sample identifier.")
+        }
+        #end if
+
 	design.matrix <- model.matrix(~ group + pair)
 	
 	maxGap <- as.numeric('$maxgap_size')
@@ -84,24 +298,62 @@
         tab <- tab[,c(1,4,5,10)]
         colnames(tab) <- c('chr','start','end','names')
 
-        dmp <- dmpFinder(dat = getBeta(GRSet),pheno =  read.table('$phenotype_table',skip=1)[,'V2'], type = '$phenotype', qCutoff = as.numeric('$q_cutoff'), shrinkVar = '$variance_shrinkage')
+        dmp <- dmpFinder(dat = getBeta(GRSet),pheno = group, type = '$phenotype', qCutoff = as.numeric('$q_cutoff'), shrinkVar = '$variance_shrinkage')
         dmp[,'names'] <- rownames(dmp)
         data <- merge(dmp, tab, by='names',sort = TRUE)
         data <- data[,c(6,7,8,1,4,5)]
+        ## Round pval/qval to 6 significant figures: raw double precision varies
+        ## in the far decimal places across R/Bioconductor point releases (e.g.
+        ## different BLAS backends), which made byte-exact test comparisons
+        ## fail despite identical probe ordering and effectively identical values.
+        data[,5] <- signif(data[,5], 6)
+        data[,6] <- signif(data[,6], 6)
         write.table(data, file= '$dmp', quote = FALSE,col.names = TRUE, row.names = FALSE, sep = '\t')
 
 	]]></configfile>
   </configfiles>
   <inputs>
-    <param type='data' name='files_red' multiple='true' format='idat' label='Red .IDAT files' help='Red .IDAT files extension is followed by the unmethylated signal intensity read in the red channel.'/>
-    <param type='data' name='files_grn' multiple='true' format='idat' label='Green .IDAT files' help='Green .IDAT files extension is followed by the methylated signal intensity read in the green channel.'/>
-    <param name='optpp' type='select' label='(Optional) Preprocessing Method' help='Mapping Ilumina methylation array data to the genome with or without additional preprocessing methods.'>
-      <option value='na'>No Selection (use default)</option>
-      <option value='ppfun'>Preprocess Funnorm</option>
-      <option value='ppq'>Preprocess Quantile</option>
-      <option value='ppsnp'>Remove SNPs</option>
-    </param>
-    <param type='data' name='phenotype_table' format='tabular' label='Phenotype Table' help='Phenotype Table must include the following information: sampleID, phenotype and paird or unpaired samples column.'/>
+    <conditional name='input_source'>
+      <param name='input_mode' type='select' label='Input data source' help='Choose raw IDATs to run full in-tool preprocessing, raw IDATs with cross-array harmonisation for mixed 450K/EPIC studies, or supply an already-harmonised GenomicRatioSet to skip preprocessing entirely.'>
+        <option value='raw_idat' selected='true'>Raw .IDAT files (run full preprocessing here)</option>
+        <option value='harmonised_idat'>Raw .IDAT files with cross-array harmonisation (Noob + betaqn + ComBat + common-probe, for mixed 450K/EPIC studies)</option>
+        <option value='external_grset'>Pre-built GenomicRatioSet (skip preprocessing)</option>
+      </param>
+      <when value='raw_idat'>
+        <param type='data' name='files_red' multiple='true' format='idat' label='Red .IDAT files' help='Red .IDAT files extension is followed by the unmethylated signal intensity read in the red channel.'/>
+        <param type='data' name='files_grn' multiple='true' format='idat' label='Green .IDAT files' help='Green .IDAT files extension is followed by the methylated signal intensity read in the green channel.'/>
+        <param name='optpp' type='select' label='(Optional) Preprocessing Method' help='Mapping Ilumina methylation array data to the genome with or without additional preprocessing methods.'>
+          <option value='na'>No Selection (use default)</option>
+          <option value='ppfun'>Preprocess Funnorm</option>
+          <option value='ppq'>Preprocess Quantile</option>
+          <option value='ppsnp'>Remove SNPs</option>
+        </param>
+      </when>
+      <when value='harmonised_idat'>
+        <param type='data' name='files_red' multiple='true' format='idat' label='Platform 1 Red .IDAT files' help='Red .IDAT files extension is followed by the unmethylated signal intensity read in the red channel. All samples here must be the same array type (e.g. all 450K) - minfi can only parse one array type per batch; use the Platform 2 fields below for a second, different array type (e.g. EPIC).'/>
+        <param type='data' name='files_grn' multiple='true' format='idat' label='Platform 1 Green .IDAT files' help='Green .IDAT files extension is followed by the methylated signal intensity read in the green channel. Must match Platform 1 Red files 1:1 by sample.'/>
+        <param type='data' name='files_red_2' multiple='true' format='idat' optional='true' label='(Optional) Platform 2 Red .IDAT files' help='For mixed-platform studies only (e.g. Platform 1 = 450K, Platform 2 = EPIC). Noob-corrected separately from Platform 1, then merged in via minfi::combineArrays before cross-platform normalisation. Leave empty for single-platform runs.'/>
+        <param type='data' name='files_grn_2' multiple='true' format='idat' optional='true' label='(Optional) Platform 2 Green .IDAT files' help='Must match Platform 2 Red files 1:1 by sample. Leave empty for single-platform runs.'/>
+        <param name='batch_column' type='text' value='cohort' label='Batch Column Name' help='Name of the column in the phenotype table identifying batch/cohort/array-of-origin, passed to ComBat as the batch covariate.'>
+          <sanitizer invalid_char=''>
+            <valid initial='string.ascii_letters,string.digits'>
+              <add value='_'/>
+            </valid>
+          </sanitizer>
+        </param>
+        <param name='covariate_column' type='text' value='none' label='Covariate Column Name (optional)' help='Name of a column to preserve as a biological covariate in the ComBat model (e.g. phenotype/disease status), or "none" to correct for batch only.'>
+          <sanitizer invalid_char=''>
+            <valid initial='string.ascii_letters,string.digits'>
+              <add value='_'/>
+            </valid>
+          </sanitizer>
+        </param>
+      </when>
+      <when value='external_grset'>
+        <param type='data' name='external_grset' format='rdata' label='Pre-built GenomicRatioSet (.rda)' help='Must contain an object named GRSet or GRSet.common - e.g. the Stage 4 output of the cross-array harmonisation pipeline (Noob -&gt; betaqn -&gt; ComBat -&gt; common-probe restriction).'/>
+      </when>
+    </conditional>
+    <param type='data' name='phenotype_table' format='tabular' label='Phenotype Table' help='Table of compared samples and their characteristics, may be categorical (e.g. cancer vs. normal) or continuous (e.g. blood pressure). Must include the following information: sampleID, phenotype and paird or unpaired samples column.'/>
     <param name='maxgap_size' type='integer' value='250' label='maxGap Size' help='If cluster is not provided this maximum location gap will be used to define cluster.'/>
     <param name='cutoff_size' type='float' value='0.1' label='Cutoff Size' help='A numeric value. Values of the estimate of the genomic profile above the cutoff or below the negative of the cutoff will be used as candidate regions. It is possible to give two separate values (upper and lower bounds). If one value is given, the lower bound is minus the value.'/>
     <param name='number_of_resamples' type='integer' value='0' label='Number of Resamples' help='An integer denoting the number of resamples to use when computing null distributions. This defaults to 0. If permutations is supplied that defines the number of permutations/bootstraps and B is ignored.'/>
@@ -109,7 +361,6 @@
       <option value='permutation' selected='True'>permutation</option>
       <option value='bootstrap'>bootstrap</option>
     </param>
-    <param type='data' name='phenotype_table' format='tabular' label='Phenotype Table' help='Table of compared samples and their characteristics, may be categorical (e.g. cancer vs. normal) or continuous (e.g. blood pressure).'/>
     <param name='phenotype' type='select' label='Phenotype Type'>
       <option value='categorical'>categorical</option>
       <option value='continuous'>continuous</option>
@@ -126,26 +377,265 @@
     <data name='dmp' format='bed' label='Differentially Methylated Positions'/>
   </outputs>
   <tests>
+    <!-- Existing behaviour: raw IDAT input, unchanged except for nesting under the new conditional -->
     <test>
-      <param name='files_red' value='GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat' ftype='idat'/>
-      <param name='files_grn' value='GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat' ftype='idat'/>
-      <param name='optpp' value='ppsnp'/>
-      <param name='grset' value='GRSet_without_SNPs.rdata'/>
+      <conditional name='input_source'>
+        <param name='input_mode' value='raw_idat'/>
+        <!-- location= lets Tool Shed's post-install test verification fetch these
+             large real IDAT fixtures from GitHub instead of requiring them bundled
+             in the shed upload (test-data/ is excluded from shed publishing due to
+             its 282MB total size, see .shed.yml). value= still resolves from the
+             local test-data/ dir for `planemo test` during development. -->
+        <param name='files_red' value='GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Red.idat'/>
+        <param name='files_grn' value='GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Grn.idat'/>
+        <param name='optpp' value='ppsnp'/>
+      </conditional>
       <param name='phenotype_table' value='phenotypeTable.txt'/>
       <param name='maxgap_size' value='250'/>
       <param name='cutoff_size' value='0.1'/>
       <param name='number_of_resamples' value='0'/>
       <param name='null_method' value='permutation'/>
-      <param name='grset' value='GRSet_without_SNPs.rdata'/>
       <param name='phenotype' value='categorical'/>
       <param name='q_cutoff' value='1'/>
       <param name='variance_shrinkage' value='FALSE'/>
-      <param name='ucsc_genome' value='ucsc.gtf'/>
+      <param name='ucsc_genome' value='ucsc.gtf' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/ucsc.gtf'/>
       <output name='qctab' file='Quality_Control_Report.txt'/>
       <output name='qcpng' file='Quality_Control_Plot.png' compare='sim_size'/>
-      <output name='table' file='SNPInfo_Table.txt'/>
-      <output name='dmr' file='Differentially_Methylated_Regions.bed'/>
-      <output name='dmp' file='Differentially_Methylated_Positions.bed'/>
+      <output name='table' file='SNPInfo_Table.txt' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/SNPInfo_Table.txt'/>
+      <output name='dmr' file='Differentially_Methylated_Regions.bed' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/Differentially_Methylated_Regions.bed'/>
+      <output name='dmp' file='Differentially_Methylated_Positions.bed' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/Differentially_Methylated_Positions.bed'/>
+    </test>
+    <!-- New behaviour: pre-built GenomicRatioSet from the harmonisation pipeline, preprocessing skipped -->
+    <test>
+      <conditional name='input_source'>
+        <param name='input_mode' value='external_grset'/>
+        <param name='external_grset' value='GRSet_common.rda' ftype='rdata' location='https://media.githubusercontent.com/media/kkamieniecka/ewas_galaxy/patch/test-data/GRSet_common.rda'/>
+      </conditional>
+      <param name='phenotype_table' value='phenotypeTable.txt'/>
+      <param name='maxgap_size' value='250'/>
+      <param name='cutoff_size' value='0.1'/>
+      <param name='number_of_resamples' value='0'/>
+      <param name='null_method' value='permutation'/>
+      <param name='phenotype' value='categorical'/>
+      <param name='q_cutoff' value='1'/>
+      <param name='variance_shrinkage' value='FALSE'/>
+      <param name='ucsc_genome' value='ucsc.gtf' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/ucsc.gtf'/>
+      <output name='qctab' file='Quality_Control_Report_Skipped.txt'/>
+      <!-- delta bumped from the 10000-byte default: this near-blank placeholder plot is
+           small enough that indexed-palette vs. RGBA-truecolor PNG encoding (which varies
+           by R graphics-device/libpng build across environments, not by plot content)
+           swings the file size by >10000 bytes even though dimensions/content match. -->
+      <output name='qcpng' file='Quality_Control_Plot_Skipped.png' compare='sim_size' delta='16000'/>
+      <output name='dmr' file='Differentially_Methylated_Regions_Harmonised.bed' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/Differentially_Methylated_Regions_Harmonised.bed'/>
+      <output name='dmp' file='Differentially_Methylated_Positions_Harmonised.bed' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/Differentially_Methylated_Positions_Harmonised.bed'/>
+    </test>
+    <!-- New behaviour: raw IDATs with cross-array harmonisation run inline
+         (Noob -> betaqn -> ComBat -> common-probe restriction -> DMR/DMP hunting)
+         as a single tool invocation, equivalent to chaining all four standalone
+         ewas_harmonisation stage tools into this tool's external_grset mode. -->
+    <test>
+      <conditional name='input_source'>
+        <param name='input_mode' value='harmonised_idat'/>
+        <!-- location= lets Tool Shed's post-install test verification fetch these
+             large real IDAT fixtures from GitHub instead of requiring them bundled
+             in the shed upload (test-data/ is excluded from shed publishing due to
+             its 282MB total size, see .shed.yml). value= still resolves from the
+             local test-data/ dir for `planemo test` during development. -->
+        <param name='files_red' value='GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Red.idat'/>
+        <param name='files_grn' value='GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Grn.idat'/>
+        <param name='batch_column' value='Treatment'/>
+        <param name='covariate_column' value='none'/>
+      </conditional>
+      <param name='phenotype_table' value='phenotypeTable.txt'/>
+      <param name='maxgap_size' value='250'/>
+      <param name='cutoff_size' value='0.1'/>
+      <param name='number_of_resamples' value='0'/>
+      <param name='null_method' value='permutation'/>
+      <param name='phenotype' value='categorical'/>
+      <param name='q_cutoff' value='1'/>
+      <param name='variance_shrinkage' value='FALSE'/>
+      <param name='ucsc_genome' value='ucsc.gtf' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/ucsc.gtf'/>
+      <output name='qctab' file='Quality_Control_Report_Harmonised_Inline.txt'/>
+      <output name='qcpng' file='Quality_Control_Plot_Harmonised_Inline.png' compare='sim_size' delta='16000'/>
+      <output name='dmr' file='Differentially_Methylated_Regions_Harmonised_Inline.bed' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/Differentially_Methylated_Regions_Harmonised_Inline.bed'/>
+      <output name='dmp' file='Differentially_Methylated_Positions_Harmonised_Inline.bed' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/Differentially_Methylated_Positions_Harmonised_Inline.bed'/>
+    </test>
+    <!-- New behaviour: two-platform harmonised_idat, exercising the
+         Platform 2 / combineArrays code path. Reuses the same 4 samples for
+         both platforms (no real second-array-type fixture available) - this
+         is a mechanical smoke test of the merge machinery (Noob x2 ->
+         combineArrays -> betaqn -> ComBat -> restrict -> DMR/DMP), not a
+         test of genuine cross-platform correctness. -->
+    <test>
+      <conditional name='input_source'>
+        <param name='input_mode' value='harmonised_idat'/>
+        <param name='files_red' value='GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Red.idat'/>
+        <param name='files_grn' value='GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Grn.idat'/>
+        <param name='files_red_2' value='GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Red.idat'/>
+        <param name='files_grn_2' value='GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Grn.idat'/>
+        <param name='batch_column' value='Treatment'/>
+        <param name='covariate_column' value='none'/>
+      </conditional>
+      <!-- combineArrays cbinds platform1's 4 samples then platform2's 4
+           samples (both blocks internally sorted alphabetically by
+           read.metharray/list.files), giving 8 columns total. ComBat's
+           batch/mod are read positionally from phenotype_table (no
+           name-based join), so with 8 samples in the merged GRSet the
+           phenotype table must supply 8 rows in that same order - reusing
+           the 4-row phenotypeTable.txt here would leave batch/mod with 4
+           rows against an 8-column beta matrix, which fails ComBat with
+           "non-conformable arguments". -->
+      <param name='phenotype_table' value='phenotypeTable_TwoPlatform.txt'/>
+      <param name='maxgap_size' value='250'/>
+      <param name='cutoff_size' value='0.1'/>
+      <param name='number_of_resamples' value='0'/>
+      <param name='null_method' value='permutation'/>
+      <param name='phenotype' value='categorical'/>
+      <param name='q_cutoff' value='1'/>
+      <param name='variance_shrinkage' value='FALSE'/>
+      <param name='ucsc_genome' value='ucsc.gtf' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/ucsc.gtf'/>
+      <output name='qctab' file='Quality_Control_Report_Harmonised_TwoPlatform.txt'/>
+      <output name='qcpng' file='Quality_Control_Plot_Harmonised_TwoPlatform.png' compare='sim_size' delta='16000'/>
+      <output name='dmr' file='Differentially_Methylated_Regions_Harmonised_TwoPlatform.bed' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/Differentially_Methylated_Regions_Harmonised_TwoPlatform.bed'/>
+      <output name='dmp' file='Differentially_Methylated_Positions_Harmonised_TwoPlatform.bed' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/Differentially_Methylated_Positions_Harmonised_TwoPlatform.bed'/>
+    </test>
+    <!-- Error-path test: an invalid Batch Column Name should fail with our
+         own explicit stop() message (naming the missing column and listing
+         what IS in the phenotype table), not a stack trace pointing into
+         ComBat's internals ("contrasts can be applied only to factors with
+         2 or more levels" - the error a real user hit and reported). -->
+    <test expect_failure='true'>
+      <conditional name='input_source'>
+        <param name='input_mode' value='harmonised_idat'/>
+        <param name='files_red' value='GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Red.idat'/>
+        <param name='files_grn' value='GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Grn.idat'/>
+        <param name='batch_column' value='NoSuchColumn'/>
+        <param name='covariate_column' value='none'/>
+      </conditional>
+      <param name='phenotype_table' value='phenotypeTable.txt'/>
+      <param name='maxgap_size' value='250'/>
+      <param name='cutoff_size' value='0.1'/>
+      <param name='number_of_resamples' value='0'/>
+      <param name='null_method' value='permutation'/>
+      <param name='phenotype' value='categorical'/>
+      <param name='q_cutoff' value='1'/>
+      <param name='variance_shrinkage' value='FALSE'/>
+      <param name='ucsc_genome' value='ucsc.gtf' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/ucsc.gtf'/>
+      <assert_stderr>
+        <has_text text="was not found in the phenotype table's header"/>
+      </assert_stderr>
+    </test>
+    <!-- Same error-path coverage as above, for Covariate Column Name instead
+         of Batch Column Name - a user hit this exact contrasts<- crash via
+         an invalid covariate too, from a plain (uncaught) model.matrix()
+         call rather than one buried inside ComBat. -->
+    <test expect_failure='true'>
+      <conditional name='input_source'>
+        <param name='input_mode' value='harmonised_idat'/>
+        <param name='files_red' value='GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Red.idat'/>
+        <param name='files_grn' value='GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Grn.idat'/>
+        <param name='batch_column' value='Treatment'/>
+        <param name='covariate_column' value='NoSuchCovariate'/>
+      </conditional>
+      <param name='phenotype_table' value='phenotypeTable.txt'/>
+      <param name='maxgap_size' value='250'/>
+      <param name='cutoff_size' value='0.1'/>
+      <param name='number_of_resamples' value='0'/>
+      <param name='null_method' value='permutation'/>
+      <param name='phenotype' value='categorical'/>
+      <param name='q_cutoff' value='1'/>
+      <param name='variance_shrinkage' value='FALSE'/>
+      <param name='ucsc_genome' value='ucsc.gtf' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/ucsc.gtf'/>
+      <assert_stderr>
+        <has_text text="Covariate Column Name 'NoSuchCovariate' was not found"/>
+      </assert_stderr>
+    </test>
+    <!-- A user hit the contrasts<- crash a third time even with a valid,
+         multi-value Batch Column Name: one sample's batch cell held the
+         literal text "NA", which read.table() parses as a true R NA. A
+         plain unique(batch) count treats NA as its own distinct value and
+         doesn't catch this, but ComBat's internal as.factor(batch) drops
+         NA rows entirely, silently collapsing back to a single real level
+         and crashing exactly as before. This phenotype table reproduces
+         that: 3 samples share one batch value, the 4th is "NA". -->
+    <test expect_failure='true'>
+      <conditional name='input_source'>
+        <param name='input_mode' value='harmonised_idat'/>
+        <param name='files_red' value='GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Red.idat'/>
+        <param name='files_grn' value='GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Grn.idat'/>
+        <param name='batch_column' value='Treatment'/>
+        <param name='covariate_column' value='none'/>
+      </conditional>
+      <param name='phenotype_table' value='phenotypeTable_MissingBatch.txt'/>
+      <param name='maxgap_size' value='250'/>
+      <param name='cutoff_size' value='0.1'/>
+      <param name='number_of_resamples' value='0'/>
+      <param name='null_method' value='permutation'/>
+      <param name='phenotype' value='categorical'/>
+      <param name='q_cutoff' value='1'/>
+      <param name='variance_shrinkage' value='FALSE'/>
+      <param name='ucsc_genome' value='ucsc.gtf' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/ucsc.gtf'/>
+      <assert_stderr>
+        <has_text text="has a missing (blank) value for 1 of 4 samples"/>
+      </assert_stderr>
+    </test>
+    <!-- A user hit a bare "non-conformable arguments" from deep inside
+         ComBat's design-matrix math (Calls: ComBat -> solve -> solve.default
+         -> tcrossprod) after supplying a phenotype table with a different
+         row count than their actual sample count - nothing in that message
+         points at the phenotype table at all. batch/mod are read
+         positionally with no join by sample name anywhere in this pipeline,
+         so row count must match sample count exactly. This phenotype table
+         has 3 rows against the 4-sample fixture set used below. -->
+    <test expect_failure='true'>
+      <conditional name='input_source'>
+        <param name='input_mode' value='harmonised_idat'/>
+        <param name='files_red' value='GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Red.idat'/>
+        <param name='files_grn' value='GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Grn.idat'/>
+        <param name='batch_column' value='Treatment'/>
+        <param name='covariate_column' value='none'/>
+      </conditional>
+      <param name='phenotype_table' value='phenotypeTable_WrongRowCount.txt'/>
+      <param name='maxgap_size' value='250'/>
+      <param name='cutoff_size' value='0.1'/>
+      <param name='number_of_resamples' value='0'/>
+      <param name='null_method' value='permutation'/>
+      <param name='phenotype' value='categorical'/>
+      <param name='q_cutoff' value='1'/>
+      <param name='variance_shrinkage' value='FALSE'/>
+      <param name='ucsc_genome' value='ucsc.gtf' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/ucsc.gtf'/>
+      <assert_stderr>
+        <has_text text="Phenotype Table has 3 row(s) but there are 4 sample(s)"/>
+      </assert_stderr>
+    </test>
+    <!-- A user hit "missing or infinite values in inputs are not allowed"
+         from deep inside dmpFinder's internal pi0.est/smooth.spline (after
+         bumphunter had already succeeded) - their Phenotype Table's 2nd
+         column had a different value for every sample, leaving no
+         within-group replication for dmpFinder's categorical F-test, so
+         every probe's p-value came out NaN and pi0.est was left averaging
+         an empty vector. This phenotype table reproduces that: 4 samples,
+         4 distinct "Sensitivity" values (used positionally as V2). Uses
+         raw_idat mode since this check applies before ComBat even runs. -->
+    <test expect_failure='true'>
+      <conditional name='input_source'>
+        <param name='input_mode' value='raw_idat'/>
+        <param name='files_red' value='GSM1588707_8795207119_R06C02_Red.idat,GSM1588706_8795207135_R02C02_Red.idat,GSM1588705_8795207119_R05C02_Red.idat,GSM1588704_8795207135_R01C02_Red.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Red.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Red.idat'/>
+        <param name='files_grn' value='GSM1588707_8795207119_R06C02_Grn.idat,GSM1588706_8795207135_R02C02_Grn.idat,GSM1588705_8795207119_R05C02_Grn.idat,GSM1588704_8795207135_R01C02_Grn.idat' ftype='idat' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588707_8795207119_R06C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588706_8795207135_R02C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588705_8795207119_R05C02_Grn.idat,https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/GSM1588704_8795207135_R01C02_Grn.idat'/>
+        <param name='optpp' value='ppsnp'/>
+      </conditional>
+      <param name='phenotype_table' value='phenotypeTable_AllUniqueGroups.txt'/>
+      <param name='maxgap_size' value='250'/>
+      <param name='cutoff_size' value='0.1'/>
+      <param name='number_of_resamples' value='0'/>
+      <param name='null_method' value='permutation'/>
+      <param name='phenotype' value='categorical'/>
+      <param name='q_cutoff' value='1'/>
+      <param name='variance_shrinkage' value='FALSE'/>
+      <param name='ucsc_genome' value='ucsc.gtf' location='https://raw.githubusercontent.com/kkamieniecka/ewas_galaxy/patch/test-data/ucsc.gtf'/>
+      <assert_stderr>
+        <has_text text="as many groups as samples"/>
+      </assert_stderr>
     </test>
   </tests>
   <help><![CDATA[
@@ -156,11 +646,23 @@
 
 The workflow combines 5 main steps, starting with raw intensity data loading (.idat) and then optional preprocessing and normalisation of the data. The next quality control step performs an additional sample check to remove low-quality data, which normalisation cannot detect. The workflow gives the user the opportunity to perform any of these preparation and data cleaning steps, including the highly recommended genetic variation annotation step resulting in single nucleotide polymorphism identification and removal. Finally, the dataset generated through all of these steps can be used to hunt (find) differentially-methylated positions (DMP)and regions (DMR) with respect to a phenotype covariate.
 
-***Inputs***    
+***Input data source***
 
-*Series of .IDAT files*: matching red and green .idat file for each sample on the chip intensity data.    
+*Raw .IDAT files*: standard single-array-type workflow - loads raw intensity data and runs this tool's own preprocessing (optional Funnorm/Quantile/SNP-removal below).
 
-*(optional) Preprocessing Methods*: by this step probes can be stratified by region via quantile normalisation or by extended implementation of functional normalisation recommended for cases where global changes are expected such as in cancer-normal comparisons. In addition unwanted probes containing either an SNP at the CpG interrogation or at the single nucleotide extension can be removed (recommended).   
+*Raw .IDAT files with cross-array harmonisation*: for studies mixing 450K and EPIC samples. Runs Noob background correction, wateRmelon's Type I/II-aware betaqn cross-platform normalisation, sva's ComBat empirical Bayes batch correction (batch column configurable, e.g. cohort/array-of-origin), and restriction to the 450K/EPIC shared probe set, all inline, before proceeding straight into DMR/DMP hunting below. Equivalent to chaining the four standalone ewas_harmonisation Stage 1-4 tools into this tool's external_grset mode, as a single tool run. Real intensity-based QC is reported (from the Noob step), unlike the pre-built-GenomicRatioSet mode below.
+
+If your samples span two genuinely different array types (e.g. some run on 450K, some on EPIC), put one platform's files in the Platform 1 fields and the other's in the optional Platform 2 fields - ``minfi::read.metharray`` can only parse one homogeneous array type per call ("Trying to parse different IDAT files, of different size and type" is the error you'd otherwise see), so each platform is Noob-corrected independently and merged via ``minfi::combineArrays`` before cross-platform normalisation continues. Leave the Platform 2 fields empty for ordinary single-platform runs. The standalone ewas_harmonisation suite has an equivalent standalone **Combine Arrays** tool for the same purpose when chaining Stage 1-4 manually instead of using this inline mode.
+
+When Platform 2 is used, the Phenotype Table must have one row per sample across *both* platforms, ordered Platform 1's samples first then Platform 2's (each block alphabetically by filename, matching how ``read.metharray`` orders columns) - the batch/covariate columns are read positionally, not joined by sample name, so a phenotype table sized for one platform only will make ComBat fail with a "non-conformable arguments" error once the two platforms are merged.
+
+*Pre-built GenomicRatioSet*: skips preprocessing entirely - supply an already-harmonised ``GRSet``/``GRSet.common`` .rda, e.g. produced by running the standalone ewas_harmonisation Stage 1-4 tools separately first.
+
+***Inputs***
+
+*Series of .IDAT files*: matching red and green .idat file for each sample on the chip intensity data.
+
+*(optional) Preprocessing Methods*: by this step probes can be stratified by region via quantile normalisation or by extended implementation of functional normalisation recommended for cases where global changes are expected such as in cancer-normal comparisons. In addition unwanted probes containing either an SNP at the CpG interrogation or at the single nucleotide extension can be removed (recommended). Only applies to the plain Raw .IDAT files mode.
 
 *Phenotype Table*: table of compared samples and their characteristics, may be categorical (e.g. cancer vs. normal) or continuous (e.g. blood pressure).   
 
@@ -193,5 +695,7 @@ sampleID/Accession, phenotype and paird or unpaired samples column
   ]]></help>
   <citations>
     <citation type='doi'>10.18129/B9.bioc.illuminaio</citation>
+    <citation type='doi'>10.1093/bioinformatics/btu049</citation>
+    <citation type='doi'>10.1101/553784</citation>
   </citations>
 </tool>

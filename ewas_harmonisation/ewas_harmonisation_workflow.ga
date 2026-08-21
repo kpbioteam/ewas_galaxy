@@ -1,0 +1,192 @@
+{
+    "a_galaxy_workflow": "true",
+    "format-version": "0.1",
+    "name": "Cross-array (450K/EPIC) Harmonisation Pipeline",
+    "annotation": "Chains the four harmonisation stages (Noob -> betaqn -> ComBat -> common-probe restriction) into minfi_analysis's DMR/DMP hunting step, extending the EWAS-Galaxy suite for cross-platform DNA methylation studies. Each stage's QC/PCA output is exposed as a workflow output so intermediate results can be inspected, matching the original suite's step-by-step design philosophy. Stage 4's common-probe-restricted GenomicRatioSet feeds directly into minfi_analysis's external_grset input mode (added specifically for this pipeline), skipping that tool's internal IDAT preprocessing entirely. Verified working end-to-end -- both via minfi_analysis.xml's own external_grset <test> case and by manually chaining a real Stage 4 output through the Galaxy UI.",
+    "tags": ["epigenetics", "ewas-galaxy", "harmonisation", "450k", "epic"],
+    "uuid": "b3f1b0a0-0000-4000-8000-000000000001",
+    "steps": {
+        "0": {
+            "id": 0,
+            "type": "data_collection_input",
+            "tool_id": null,
+            "tool_version": null,
+            "label": "Red channel IDAT files (collection)",
+            "annotation": "List collection of Red channel .IDAT files, one per sample. Mixed 450K/EPIC samples supported.",
+            "inputs": [
+                {"description": "Red channel .IDAT files, one per sample", "name": "Red channel IDAT files (collection)"}
+            ],
+            "outputs": [],
+            "input_connections": {},
+            "position": {"left": 0, "top": 0},
+            "tool_state": "{\"collection_type\": \"list\"}",
+            "workflow_outputs": []
+        },
+        "1": {
+            "id": 1,
+            "type": "data_collection_input",
+            "tool_id": null,
+            "tool_version": null,
+            "label": "Green channel IDAT files (collection)",
+            "annotation": "List collection of Green channel .IDAT files, matched 1:1 with the Red collection by sample.",
+            "inputs": [
+                {"description": "Green channel .IDAT files, one per sample", "name": "Green channel IDAT files (collection)"}
+            ],
+            "outputs": [],
+            "input_connections": {},
+            "position": {"left": 0, "top": 180},
+            "tool_state": "{\"collection_type\": \"list\"}",
+            "workflow_outputs": []
+        },
+        "2": {
+            "id": 2,
+            "type": "data_input",
+            "tool_id": null,
+            "tool_version": null,
+            "label": "Phenotype / batch table",
+            "annotation": "Tab-separated table, one row per sample, matching the sample order of the IDAT collections. Must include a batch/cohort column for Stage 3 ComBat correction, and is reused as minfi_analysis's phenotype table for DMP finding.",
+            "inputs": [
+                {"description": "Phenotype/batch table (tabular)", "name": "Phenotype / batch table"}
+            ],
+            "outputs": [],
+            "input_connections": {},
+            "position": {"left": 0, "top": 360},
+            "tool_state": "{}",
+            "workflow_outputs": []
+        },
+        "3": {
+            "id": 3,
+            "type": "tool",
+            "tool_id": "toolshed.g2.bx.psu.edu/repos/kpbioteam/ewas_harmonisation/cpg_harmonisation_stage1_noob/1.0.0",
+            "tool_version": "1.0.0",
+            "label": "Stage 1: Noob background correction",
+            "annotation": "Within-array background correction and single dye bias adjustment.",
+            "inputs": [],
+            "outputs": [
+                {"name": "grset_out", "type": "rdata"},
+                {"name": "qctab", "type": "txt"},
+                {"name": "qcpng", "type": "png"}
+            ],
+            "input_connections": {
+                "files_red": {"id": 0, "output_name": "output"},
+                "files_grn": {"id": 1, "output_name": "output"}
+            },
+            "position": {"left": 320, "top": 60},
+            "tool_state": "{\"files_red\": {\"__class__\": \"RuntimeValue\"}, \"files_grn\": {\"__class__\": \"RuntimeValue\"}}",
+            "workflow_outputs": [
+                {"output_name": "qctab", "label": "stage1_qc_report"},
+                {"output_name": "qcpng", "label": "stage1_qc_plot"}
+            ]
+        },
+        "4": {
+            "id": 4,
+            "type": "tool",
+            "tool_id": "toolshed.g2.bx.psu.edu/repos/kpbioteam/ewas_harmonisation/cpg_harmonisation_stage2_betaqn/1.0.0",
+            "tool_version": "1.0.0",
+            "label": "Stage 2: Cross-platform quantile normalisation",
+            "annotation": "wateRmelon::betaqn(), Type I/II aware, aligns beta distributions across 450K and EPIC.",
+            "inputs": [],
+            "outputs": [
+                {"name": "grset_out", "type": "rdata"},
+                {"name": "pcapng", "type": "png"},
+                {"name": "summarytab", "type": "tabular"}
+            ],
+            "input_connections": {
+                "grset_in": {"id": 3, "output_name": "grset_out"}
+            },
+            "position": {"left": 640, "top": 60},
+            "tool_state": "{\"grset_in\": {\"__class__\": \"RuntimeValue\"}}",
+            "workflow_outputs": [
+                {"output_name": "pcapng", "label": "stage2_pca_plot"}
+            ]
+        },
+        "5": {
+            "id": 5,
+            "type": "tool",
+            "tool_id": "toolshed.g2.bx.psu.edu/repos/kpbioteam/ewas_harmonisation/cpg_harmonisation_stage3_combat/1.0.0",
+            "tool_version": "1.0.0",
+            "label": "Stage 3: ComBat batch correction",
+            "annotation": "Empirical Bayes batch correction, cohort/array-of-origin as batch covariate.",
+            "inputs": [],
+            "outputs": [
+                {"name": "grset_out", "type": "rdata"},
+                {"name": "pcapng", "type": "png"}
+            ],
+            "input_connections": {
+                "grset_in": {"id": 4, "output_name": "grset_out"},
+                "phenotype_table": {"id": 2, "output_name": "output"}
+            },
+            "position": {"left": 960, "top": 60},
+            "tool_state": "{\"grset_in\": {\"__class__\": \"RuntimeValue\"}, \"phenotype_table\": {\"__class__\": \"RuntimeValue\"}, \"batch_column\": \"cohort\", \"covariate_column\": \"none\"}",
+            "workflow_outputs": [
+                {"output_name": "pcapng", "label": "stage3_pca_plot_by_batch"}
+            ]
+        },
+        "6": {
+            "id": 6,
+            "type": "tool",
+            "tool_id": "toolshed.g2.bx.psu.edu/repos/kpbioteam/ewas_harmonisation/cpg_harmonisation_stage4_commonprobes/1.0.0",
+            "tool_version": "1.0.0",
+            "label": "Stage 4: Restriction to common probes",
+            "annotation": "Restricts to the 450K ∩ EPIC shared probe set for downstream DMR/DMP analysis.",
+            "inputs": [],
+            "outputs": [
+                {"name": "grset_out", "type": "rdata"},
+                {"name": "beta_out", "type": "tabular"},
+                {"name": "summarytab", "type": "tabular"}
+            ],
+            "input_connections": {
+                "grset_in": {"id": 5, "output_name": "grset_out"}
+            },
+            "position": {"left": 1280, "top": 60},
+            "tool_state": "{\"grset_in\": {\"__class__\": \"RuntimeValue\"}}",
+            "workflow_outputs": [
+                {"output_name": "grset_out", "label": "harmonised_grset_common_probes"},
+                {"output_name": "beta_out", "label": "harmonised_beta_matrix"},
+                {"output_name": "summarytab", "label": "stage4_probe_retention_summary"}
+            ]
+        },
+        "7": {
+            "id": 7,
+            "type": "data_input",
+            "tool_id": null,
+            "tool_version": null,
+            "label": "UCSC genome table",
+            "annotation": "UCSC genome table (e.g. knownGene.txt) used by minfi_analysis to merge DMP/DMR coordinates with gene/feature annotations. Not produced by the harmonisation stages -- supplied fresh each run.",
+            "inputs": [
+                {"description": "UCSC genome table (tabular/gtf)", "name": "UCSC genome table"}
+            ],
+            "outputs": [],
+            "input_connections": {},
+            "position": {"left": 1280, "top": 320},
+            "tool_state": "{}",
+            "workflow_outputs": []
+        },
+        "8": {
+            "id": 8,
+            "type": "tool",
+            "tool_id": "toolshed.g2.bx.psu.edu/repos/kpbioteam/ewastools/minfi_analysis/2.1.3",
+            "tool_version": "2.1.3",
+            "label": "DMR/DMP hunting on harmonised data (minfi_analysis, external_grset mode)",
+            "annotation": "Consumes Stage 4's common-probe-restricted GenomicRatioSet directly via minfi_analysis's external_grset input mode, skipping that tool's internal IDAT preprocessing entirely (raw intensity-based QC is not meaningful for pre-normalised data -- see Stage 1 QC report and Stage 2/3 PCA plots instead).",
+            "inputs": [],
+            "outputs": [
+                {"name": "qctab", "type": "txt"},
+                {"name": "qcpng", "type": "png"},
+                {"name": "dmr", "type": "bed"},
+                {"name": "dmp", "type": "bed"}
+            ],
+            "input_connections": {
+                "input_source|external_grset": {"id": 6, "output_name": "grset_out"},
+                "phenotype_table": {"id": 2, "output_name": "output"},
+                "ucsc_genome": {"id": 7, "output_name": "output"}
+            },
+            "position": {"left": 1600, "top": 60},
+            "tool_state": "{\"input_source\": {\"input_mode\": \"external_grset\", \"external_grset\": {\"__class__\": \"RuntimeValue\"}}, \"phenotype_table\": {\"__class__\": \"RuntimeValue\"}, \"maxgap_size\": \"250\", \"cutoff_size\": \"0.1\", \"number_of_resamples\": \"0\", \"null_method\": \"permutation\", \"phenotype\": \"categorical\", \"q_cutoff\": \"1\", \"variance_shrinkage\": \"FALSE\", \"ucsc_genome\": {\"__class__\": \"RuntimeValue\"}}",
+            "workflow_outputs": [
+                {"output_name": "dmr", "label": "final_differentially_methylated_regions"},
+                {"output_name": "dmp", "label": "final_differentially_methylated_positions"}
+            ]
+        }
+    }
+}

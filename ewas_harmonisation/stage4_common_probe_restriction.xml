@@ -1,0 +1,91 @@
+<?xml version='1.0'?>
+<tool id='cpg_harmonisation_stage4_commonprobes' name='CpG Harmonisation Stage 4: Restriction to Common Probes' version='@TOOL_VERSION@' profile='@PROFILE@'>
+  <description>Restricts to the 450K and EPIC shared probe set for downstream DMR/DMP analysis</description>
+  <macros>
+    <import>macros.xml</import>
+  </macros>
+  <expand macro='requirements'/>
+  <expand macro='stdio'/>
+  <command detect_errors='exit_code'><![CDATA[
+      Rscript '$stage4_script'
+      ]]></command>
+  <configfiles>
+    <configfile name='stage4_script'><![CDATA[
+        require('minfi', quietly = TRUE)
+        require('IlluminaHumanMethylation450kmanifest', quietly = TRUE)
+        require('IlluminaHumanMethylationEPICmanifest', quietly = TRUE)
+        options(warn = -1)
+
+        load('$grset_in')
+        if (!exists('GRSet')) {
+          stop("grset_in .rda must contain an object named 'GRSet'")
+        }
+
+        probes450k <- getManifestInfo(IlluminaHumanMethylation450kmanifest, 'locusNames')
+        probesEPIC <- getManifestInfo(IlluminaHumanMethylationEPICmanifest, 'locusNames')
+        common.probes <- intersect(probes450k, probesEPIC) #450K ∩ EPIC shared probe set
+
+        GRSet.common <- GRSet[rownames(GRSet) %in% common.probes, ]
+
+        beta.common <- getBeta(GRSet.common)
+        write.table(beta.common, file = '$beta_out', quote = FALSE, sep = '\t', col.names = NA)
+
+        summary.df <- data.frame(
+          stage = c('input_probes', 'common_probes_450k_epic', 'retained'),
+          count = c(nrow(GRSet), length(common.probes), nrow(GRSet.common))
+        )
+        write.table(summary.df, file = '$summarytab', quote = FALSE, sep = '\t', row.names = FALSE)
+
+        GRSet <- GRSet.common #keep the canonical 'GRSet' name for save(); GRSet.common is also written so minfi_analysis.xml's external_grset mode can consume this file directly
+        save(GRSet, GRSet.common, file = '$grset_out')
+      ]]></configfile>
+  </configfiles>
+  <inputs>
+    <param type='data' name='grset_in' format='rdata' label='Stage 3 GenomicRatioSet' help='Must contain an object named GRSet - the Stage 3 (ComBat batch correction) output.'/>
+  </inputs>
+  <outputs>
+    <data name='grset_out' format='rdata' label='Stage 4 GenomicRatioSet (common probes)'/>
+    <data name='beta_out' format='tabular' label='Stage 4 Harmonised Beta Matrix'/>
+    <data name='summarytab' format='tabular' label='Stage 4 Probe Retention Summary'/>
+  </outputs>
+  <tests>
+    <test>
+      <param name='grset_in' value='Stage3_GRSet.rda' ftype='rdata'/>
+      <output name='grset_out' file='Stage4_GRSet.rda' compare='sim_size'/>
+      <output name='beta_out' file='Stage4_Harmonised_Beta_Matrix.txt'/>
+      <output name='summarytab' file='Stage4_Probe_Retention_Summary.txt'/>
+    </test>
+  </tests>
+  <help><![CDATA[
+
+.. class:: infomark
+
+**What it does**
+
+Stage 4 (final stage) of the cross-array (450K/EPIC) harmonisation pipeline. Takes the
+batch-corrected ``GenomicRatioSet`` from Stage 3 and restricts it to the probe set shared
+by the 450K and EPIC manifests, so that downstream analyses treat every sample
+consistently regardless of which array it was run on.
+
+The output ``.rda`` contains an object named ``GRSet`` (and an identical alias
+``GRSet.common``), matching the ``external_grset`` input mode of the existing
+``minfi_analysis`` tool, so this pipeline's output can be fed directly into DMR/DMP
+hunting without re-running that tool's internal preprocessing.
+
+***Inputs***
+
+*Stage 3 GenomicRatioSet*: ``.rda`` output of the ComBat batch correction stage.
+
+***Outputs***
+
+*Stage 4 GenomicRatioSet*: an ``.rda`` file containing the common-probe-restricted
+``GRSet``, ready for use as the ``minfi_analysis`` tool's pre-built GenomicRatioSet input.
+
+*Harmonised Beta Matrix*: the common-probe beta values as a tab-separated matrix.
+
+*Probe Retention Summary*: a small table reporting the input probe count, the size of the
+450K/EPIC common probe set, and the number of probes retained.
+
+  ]]></help>
+  <expand macro='citations'/>
+</tool>

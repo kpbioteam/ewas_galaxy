@@ -1,0 +1,83 @@
+<?xml version='1.0'?>
+<tool id='cpg_harmonisation_stage2_betaqn' name='CpG Harmonisation Stage 2: Cross-Platform Quantile Normalisation' version='@TOOL_VERSION@' profile='@PROFILE@'>
+  <description>Type I/II-aware beta quantile normalisation across 450K and EPIC (wateRmelon::betaqn)</description>
+  <macros>
+    <import>macros.xml</import>
+  </macros>
+  <expand macro='requirements'/>
+  <expand macro='stdio'/>
+  <command detect_errors='exit_code'><![CDATA[
+      Rscript '$stage2_script'
+      ]]></command>
+  <configfiles>
+    <configfile name='stage2_script'><![CDATA[
+        require('minfi', quietly = TRUE)
+        require('wateRmelon', quietly = TRUE)
+        options(warn = -1)
+
+        load('$grset_in')
+        if (!exists('GRSet')) {
+          stop("grset_in .rda must contain an object named 'GRSet'")
+        }
+
+        betas <- getBeta(GRSet)
+        betas.norm <- betaqn(betas) #wateRmelon::betaqn - Type I/II aware quantile normalisation, aligns beta distributions across 450K and EPIC
+
+        assay(GRSet, 'Beta') <- betas.norm
+
+        pca <- prcomp(t(na.omit(betas.norm)))
+        summary.pca <- summary(pca)\$importance
+        write.table(summary.pca, file = '$summarytab', quote = FALSE, sep = '\t', col.names = NA)
+
+        png('$pcapng')
+        plot(pca\$x[,1], pca\$x[,2], xlab = 'PC1', ylab = 'PC2',
+             main = 'Post-normalisation PCA (betaqn)', pch = 19)
+        dev.off()
+
+        save(GRSet, file = '$grset_out')
+      ]]></configfile>
+  </configfiles>
+  <inputs>
+    <param type='data' name='grset_in' format='rdata' label='Stage 1 GenomicRatioSet' help='Must contain an object named GRSet - the Stage 1 (Noob background correction) output.'/>
+  </inputs>
+  <outputs>
+    <data name='grset_out' format='rdata' label='Stage 2 GenomicRatioSet (betaqn-normalised)'/>
+    <data name='pcapng' format='png' label='Stage 2 PCA Plot'/>
+    <data name='summarytab' format='tabular' label='Stage 2 PCA Summary'/>
+  </outputs>
+  <tests>
+    <test>
+      <param name='grset_in' value='Stage1_GRSet.rda' ftype='rdata'/>
+      <output name='grset_out' file='Stage2_GRSet.rda' compare='sim_size'/>
+      <output name='pcapng' file='Stage2_PCA_Plot.png' compare='sim_size' delta='16000'/>
+      <output name='summarytab' file='Stage2_PCA_Summary.txt'/>
+    </test>
+  </tests>
+  <help><![CDATA[
+
+.. class:: infomark
+
+**What it does**
+
+Stage 2 of the cross-array (450K/EPIC) harmonisation pipeline. Takes the Noob-corrected
+``GenomicRatioSet`` from Stage 1 and applies ``wateRmelon::betaqn``, a Type I/II
+probe-design-aware quantile normalisation of beta values. This aligns beta value
+distributions across samples run on different array platforms (450K and EPIC), which is
+necessary before combining them for downstream batch correction and analysis.
+
+***Inputs***
+
+*Stage 1 GenomicRatioSet*: ``.rda`` output of the Noob background correction stage.
+
+***Outputs***
+
+*Stage 2 GenomicRatioSet*: an ``.rda`` file containing the normalised ``GRSet``, consumed
+by Stage 3 (ComBat batch correction).
+
+*PCA Plot and Summary*: principal component analysis of the normalised beta matrix, useful
+for visually confirming that samples no longer separate by array platform after
+normalisation.
+
+  ]]></help>
+  <expand macro='citations'/>
+</tool>

@@ -1,0 +1,5 @@
+Accession	Sensitivity	Treatment
+GSM1588704	sample1	MAPKi
+GSM1588705	sample2	MAPKi
+GSM1588706	sample3	BRAFi
+GSM1588707	sample4	BRAFi

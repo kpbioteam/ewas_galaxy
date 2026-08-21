@@ -1,0 +1,7 @@
+stage	count
+platform1_probes	485512
+platform1_samples	4
+platform2_probes	485512
+platform2_samples	4
+combined_probes	485512
+combined_samples	8

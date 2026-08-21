@@ -1,0 +1,4 @@
+# Large binary test fixtures -- Galaxy tool test-data outputs (GenomicRatioSet
+# .rda objects) commonly exceed GitHub's 50MB soft limit for a 4-sample
+# genome-wide array. Track via Git LFS instead of plain git blobs.
+*.rda filter=lfs diff=lfs merge=lfs -text

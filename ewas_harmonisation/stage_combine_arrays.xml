@@ -1,0 +1,126 @@
+<?xml version='1.0'?>
+<tool id='cpg_harmonisation_combine_arrays' name='CpG Harmonisation: Combine Arrays' version='@TOOL_VERSION@' profile='@PROFILE@'>
+  <description>Merges two array platforms (e.g. 450K + EPIC) into one GenomicRatioSet before cross-platform normalisation</description>
+  <macros>
+    <import>macros.xml</import>
+  </macros>
+  <expand macro='requirements'/>
+  <expand macro='stdio'/>
+  <command detect_errors='exit_code'><![CDATA[
+      Rscript '$combine_arrays_script'
+      ]]></command>
+  <configfiles>
+    <configfile name='combine_arrays_script'><![CDATA[
+        require('minfi', quietly = TRUE)
+        options(warn = -1)
+
+        ## minfi::read.metharray() (used by Stage 1) can only parse IDATs from a
+        ## single, homogeneous array type/size in one call - "Trying to parse
+        ## different IDAT files, of different size and type" is what it raises
+        ## if you hand it a mix of e.g. 450K and EPIC samples together. The fix
+        ## is to run Stage 1 (Noob) separately per platform batch first, then
+        ## merge the two resulting GenomicRatioSets here via minfi::combineArrays,
+        ## which aligns them on shared genomic ranges and cbinds the samples
+        ## together - before continuing into Stage 2 (betaqn) on the combined set.
+
+        e1 <- new.env()
+        load('$grset_in_1', envir = e1)
+        if (exists('GRSet', envir = e1)) {
+          GRSet1 <- get('GRSet', envir = e1)
+        } else if (exists('GRSet.common', envir = e1)) {
+          GRSet1 <- get('GRSet.common', envir = e1)
+        } else {
+          stop("grset_in_1 .rda must contain an object named 'GRSet' or 'GRSet.common'")
+        }
+
+        e2 <- new.env()
+        load('$grset_in_2', envir = e2)
+        if (exists('GRSet', envir = e2)) {
+          GRSet2 <- get('GRSet', envir = e2)
+        } else if (exists('GRSet.common', envir = e2)) {
+          GRSet2 <- get('GRSet.common', envir = e2)
+        } else {
+          stop("grset_in_2 .rda must contain an object named 'GRSet' or 'GRSet.common'")
+        }
+
+        platform1.probes <- nrow(GRSet1)
+        platform1.samples <- ncol(GRSet1)
+        platform2.probes <- nrow(GRSet2)
+        platform2.samples <- ncol(GRSet2)
+
+        ## combineArrays' internal colData merge hits a real bug ("unable to
+        ## find an inherited method for function 'colData<-' for signature
+        ## GenomicRatioSet, AsIs") when both inputs have completely empty
+        ## colData (0 columns) - which is exactly the state Stage 1's output
+        ## is in, since it never sets any pData. Giving each object one real
+        ## column first avoids the degenerate empty-data-frame merge that
+        ## triggers it.
+        pData(GRSet1)\$Platform <- 'platform1'
+        pData(GRSet2)\$Platform <- 'platform2'
+        GRSet <- combineArrays(GRSet1, GRSet2) #aligns on shared genomic ranges, cbinds samples
+
+        summary.df <- data.frame(
+          stage = c('platform1_probes', 'platform1_samples', 'platform2_probes', 'platform2_samples', 'combined_probes', 'combined_samples'),
+          count = c(platform1.probes, platform1.samples, platform2.probes, platform2.samples, nrow(GRSet), ncol(GRSet))
+        )
+        write.table(summary.df, file = '$summarytab', quote = FALSE, sep = '\t', row.names = FALSE)
+
+        save(GRSet, file = '$grset_out')
+      ]]></configfile>
+  </configfiles>
+  <inputs>
+    <param type='data' name='grset_in_1' format='rdata' label='Platform 1 GenomicRatioSet' help='Must contain an object named GRSet - the Stage 1 (Noob background correction) output, run on this platform&apos;s IDATs only (e.g. all 450K samples).'/>
+    <param type='data' name='grset_in_2' format='rdata' label='Platform 2 GenomicRatioSet' help='Must contain an object named GRSet - the Stage 1 (Noob background correction) output, run separately on the other platform&apos;s IDATs (e.g. all EPIC samples).'/>
+  </inputs>
+  <outputs>
+    <data name='grset_out' format='rdata' label='Combined GenomicRatioSet (Platform 1 + Platform 2)'/>
+    <data name='summarytab' format='tabular' label='Combine Arrays Summary'/>
+  </outputs>
+  <tests>
+    <test>
+      <param name='grset_in_1' value='Stage1_GRSet.rda' ftype='rdata'/>
+      <param name='grset_in_2' value='Stage1_GRSet_Platform2.rda' ftype='rdata'/>
+      <output name='grset_out' file='CombineArrays_GRSet.rda' compare='sim_size'/>
+      <output name='summarytab' file='CombineArrays_Summary.txt'/>
+    </test>
+  </tests>
+  <help><![CDATA[
+
+.. class:: infomark
+
+**What it does**
+
+Merges two array-platform batches (e.g. 450K and EPIC) into a single ``GenomicRatioSet``
+using ``minfi::combineArrays``, so a mixed-platform study can proceed through the rest of
+the cross-array harmonisation pipeline (betaqn normalisation, ComBat batch correction,
+common-probe restriction) as one combined dataset.
+
+**Why this step exists**
+
+``minfi::read.metharray`` (used internally by Stage 1: Noob Background Correction) can
+only parse IDAT files from a single, homogeneous array type in one call - feeding it a mix
+of platforms fails with ``[read.metharray] Trying to parse different IDAT files, of
+different size and type``. The fix is to run Stage 1 *separately* on each platform's IDATs
+first (producing one Noob-corrected ``GenomicRatioSet`` per platform), then use this tool
+to merge the two into one combined set before continuing to Stage 2.
+
+``combineArrays`` aligns the two inputs on their shared genomic ranges (not just probe ID
+strings, so it's robust to platform-specific probe naming/annotation differences) and
+concatenates the samples together as columns.
+
+***Inputs***
+
+*Platform 1 / Platform 2 GenomicRatioSet*: the Stage 1 output run independently on each
+platform's raw IDATs (e.g. one run over all 450K samples, one run over all EPIC samples).
+
+***Outputs***
+
+*Combined GenomicRatioSet*: an ``.rda`` file containing the merged ``GRSet``, ready for
+Stage 2 (Cross-Platform Quantile Normalisation).
+
+*Combine Arrays Summary*: probe and sample counts for each input platform and the
+combined result, so you can sanity-check that samples weren't dropped unexpectedly.
+
+  ]]></help>
+  <expand macro='citations'/>
+</tool>
